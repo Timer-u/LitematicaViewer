@@ -1,3 +1,6 @@
-pip install -u tkinter
-pip install -u litemapy
-pip install -u PIL
+pip install litemapy
+pip install pillow
+pip install scipy
+pip install pygame
+pip install matplotlib
+pause

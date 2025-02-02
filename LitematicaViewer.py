@@ -83,7 +83,7 @@ def output_data(classification : bool = False):
                                                                                             ("CSV Chart files",
                                                                                             "*.csv")],
                                                            title="Litematica Analysis Data Save As",
-                                                           initialfile=f"{file_name.split(".")[0]}.txt")
+                                                           initialfile=f'''{file_name.split(".")[0]}.txt''')
     if not output_file_path:
         return
     with codecs.open(output_file_path, 'w', encoding='utf-8-sig') as f:
@@ -209,7 +209,7 @@ def start_analysis(simple_type):
         a_stderr.config(text="{:.2f}".format(stat[5]))
         a_iqr.config(text="{:.2f}".format(stat[6]))
         a_ske.config(text="{:.2f}".format(stat[7]))
-        a_ci.config(text=f"[{"{:.0f}".format(stat[8])},{"{:.0f}".format(stat[9])}]")
+        a_ci.config(text=[{"{:.0f}".format(stat[8])},{"{:.0f}".format(stat[9])}])
 
 
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
@@ -477,3 +477,4 @@ btn_spawn.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
 btn_spawn.grid(row=7, column=0, padx=2, pady=2, columnspan=2)
 
 litem.mainloop()
+
