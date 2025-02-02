@@ -3,6 +3,7 @@ from tkinter import filedialog, ttk
 from litemapy import Schematic, Region, BlockState
 from PIL import Image, ImageTk
 from Litmatool import *
+from Structure import *
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -209,7 +210,7 @@ def start_analysis(simple_type):
         a_stderr.config(text="{:.2f}".format(stat[5]))
         a_iqr.config(text="{:.2f}".format(stat[6]))
         a_ske.config(text="{:.2f}".format(stat[7]))
-        a_ci.config(text=[{"{:.0f}".format(stat[8])},{"{:.0f}".format(stat[9])}])
+        a_ci.config(text=f"[{"{:.0f}".format(stat[8])},{"{:.0f}".format(stat[9])}]")
 
 
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
@@ -387,9 +388,6 @@ a_ske.grid(row=3, column=3, padx=5, pady=5)
 a_ci = tk.Label(frame_stati, text="[0,0]", font=("Arial", 12), bg=color_map[1], fg=color_map[2])
 a_ci.grid(row=3, column=5, padx=5, pady=5)
 
-
-
-
 # lith容器
 frame_spawn = tk.Frame(litem, bg=color_map[1])
 hide(frame_spawn)
@@ -398,13 +396,11 @@ frame_spawn_new = tk.Frame(frame_spawn, bg=color_map[0])
 frame_spawn_new.pack(side=tk.TOP, fill=tk.X,  padx=20)
 frame_new_title = tk.Label(frame_spawn_new, text="生成图形投影", font=("Arial", 18), bg=color_map[0], fg=color_map[3])
 frame_new_title.grid(row=0, column=0, padx=5, pady=5, columnspan=4)
-
 # -- ID 输入框
 label_id = tk.Label(frame_spawn_new, text="ID", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_id.grid(row=1, column=0, padx=5, pady=5)
 entry_id = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_id.grid(row=1, column=1, padx=5, pady=5, columnspan=3)
-
 # -- XYZ 长宽高输入框
 label_xyz = tk.Label(frame_spawn_new, text="X,Y,Z", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_xyz.grid(row=2, column=0, padx=5, pady=5)
@@ -422,34 +418,50 @@ entry_width = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1
 entry_width.grid(row=3, column=2, padx=2, pady=5)
 entry_height = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_height.grid(row=3, column=3, padx=2, pady=5)
-
 # -- Hollow 单选框和 Thickness 输入框
-hollow_var = tk.IntVar()
+chollow = tk.BooleanVar()
 lable_thickness = tk.Label(frame_spawn_new, text="Thickness", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 lable_thickness.grid(row=4, column=0, padx=5, pady=5)
 entry_thickness = tk.Entry(frame_spawn_new, width=13, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_thickness.grid(row=4, column=1, padx=5, pady=5, columnspan=2)
-check_hollow = tk.Checkbutton(frame_spawn_new, text="Hollow", variable=hollow_var, bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_hollow = tk.Checkbutton(frame_spawn_new, text="Hollow", variable=chollow, bg=color_map[0], fg=color_map[3], font=("Arial", 10))
 check_hollow.grid(row=5, column=0, padx=5, pady=5)
-
-
 # -- 上下左右前后复选框
-check_up = tk.Checkbutton(frame_spawn_new, text="上", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+cu = tk.BooleanVar()
+cd = tk.BooleanVar()
+cl = tk.BooleanVar()
+cr = tk.BooleanVar()
+cf = tk.BooleanVar()
+cb = tk.BooleanVar()
+check_up = tk.Checkbutton(frame_spawn_new, text="上", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cu)
 check_up.grid(row=5, column=1, padx=2, pady=2)
-check_down = tk.Checkbutton(frame_spawn_new, text="下", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_down = tk.Checkbutton(frame_spawn_new, text="下", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cd)
 check_down.grid(row=5, column=2, padx=2, pady=2)
-check_left = tk.Checkbutton(frame_spawn_new, text="左", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_left = tk.Checkbutton(frame_spawn_new, text="左", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cl)
 check_left.grid(row=5, column=3, padx=2, pady=2)
-check_right = tk.Checkbutton(frame_spawn_new, text="右", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_right = tk.Checkbutton(frame_spawn_new, text="右", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cr)
 check_right.grid(row=6, column=1, padx=2, pady=2)
-check_front = tk.Checkbutton(frame_spawn_new, text="前", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_front = tk.Checkbutton(frame_spawn_new, text="前", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cf)
 check_front.grid(row=6, column=2, padx=2, pady=2)
-check_back = tk.Checkbutton(frame_spawn_new, text="后", bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_back = tk.Checkbutton(frame_spawn_new, text="后", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cb)
 check_back.grid(row=6, column=3, padx=2, pady=2)
 
-btn_spawn = tk.Button(frame_spawn_new, text="Spawn生成", font=("Arial", 10, "bold"))
+label_spawn = tk.Label(frame_spawn_new, text="FileName", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn.grid(row=7, column=0, padx=5, pady=5)
+entry_spawn = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_spawn.grid(row=7, column=1, columnspan=3,padx=2, pady=2)
+
+x,y,z = entry_x.get(),entry_y.get(),entry_z.get()
+l,w,h = entry_length.get(),entry_width.get(),entry_height.get()
+btn_spawn = tk.Button(frame_spawn_new, text="Spawn生成", font=("Arial", 10, "bold"),
+                      command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
+                                                        (x,y,z) if x and y and z else (0,0,0),
+                                                        (l,w,h) if l and w and h else (0,0,0),
+                                                        chollow, entry_thickness.get(),
+                                                        [cu,cd,cl,cr,cf,cb]))
 btn_spawn.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
-btn_spawn.grid(row=7, column=0, padx=2, pady=2, columnspan=2)
+btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=2)
+
 # - 右容器下部：frame_spawn_change
 frame_spawn_change = tk.Frame(frame_spawn, bg=color_map[0])
 frame_spawn_change.pack(side=tk.TOP, fill=tk.X, pady=10, padx=20)
@@ -472,9 +484,14 @@ label_change.grid(row=2, column=0, padx=5, pady=5)
 text_change = tk.Text(frame_spawn_change,width=20, height=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 text_change.grid(row=2, column=1, columnspan=3, padx=5, pady=5)
 
-btn_spawn = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"))
-btn_spawn.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
-btn_spawn.grid(row=7, column=0, padx=2, pady=2, columnspan=2)
+label_spawn2 = tk.Label(frame_spawn_change, text="FileName", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn2.grid(row=3, column=0, padx=5, pady=5)
+entry_spawn2 = tk.Entry(frame_spawn_change, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_spawn2.grid(row=3, column=1, columnspan=3,padx=2, pady=2)
+
+btn_spawn2 = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"))
+btn_spawn2.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
+btn_spawn2.grid(row=4, column=0, padx=2, pady=2, columnspan=2)
 
 litem.mainloop()
 
