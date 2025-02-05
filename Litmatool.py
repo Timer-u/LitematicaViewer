@@ -1,7 +1,7 @@
 import json, subprocess
 import numpy as np
 import scipy.stats as stats
-from pygame.display import mode_ok
+#from pygame.display import mode_ok
 
 json_data = json.load(open('lang/zh_cn.json', 'r', encoding='utf-8'))
 json_cati = json.load(open('lang/catigory.json', 'r', encoding='utf-8'))
@@ -38,6 +38,8 @@ def Category_Tran(data):
     return ""
 
 def statistics(data):
+    print(data)
+    if not data: return []
     mean = np.mean(data)
     median = np.median(data)
     mode = stats.mode(data)

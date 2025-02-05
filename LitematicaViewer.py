@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, Text
 from litemapy import Schematic, Region, BlockState
 from PIL import Image, ImageTk
 from Litmatool import *
@@ -16,6 +16,7 @@ plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
 APP_VERSION = '0.3.2'
+schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
 Block = {}
@@ -28,7 +29,12 @@ color_map = [
     '#0066cc',  # 副色 深蓝
     '#f8f9fa',  # 背景
     '#343a40',  # 文字
+    '#ff6347',  # RED
+    '#ffd700',  # GOLD
+    '#800080',  # PURPLE
+    '#008000'   # GREEN
 ]
+
 
 def import_file():
     global file_path, file_name
@@ -112,9 +118,12 @@ def output_data(classification : bool = False):
                         f.write(f"{num}[{convert_units(num)}] | {cn_translate(id)}[{id}]\n")
     os.startfile(output_file_path)
 
+
 def Draw_Chart():
     ax1.clear()
     ax2.clear()
+
+    # 绘制方块统计饼图
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
     top_5 = sorted_block[:5]
     other_count = sum(count for _, count in sorted_block[5:])
@@ -126,16 +135,22 @@ def Draw_Chart():
     ax1.pie(sizes1, labels=labels1, autopct='%1.1f%%', startangle=90)
     ax1.set_title("方块统计")
 
+    # 绘制分类统计饼图
     cla_bl = {}
     for category, blocks in Cla_Block.items():
         if blocks:
             total = sum(count for count, _ in blocks)
-            cla_bl[category]=total
-    cat_other = sum(int(it[0]) for it in Cla_Block["其他"])
-    Cla_Block.pop("其他")
+            cla_bl[category] = total
+
+    # 处理“其他”类别
+    if "其他" in cla_bl:
+        cat_other = cla_bl.pop("其他")  # 移除“其他”类别，并获取其值
+    else:
+        cat_other = 0  # 如果没有“其他”类别，则设置为0
+
     sorted_block = sorted(cla_bl.items(), key=lambda x: x[1], reverse=True)
     top_5 = sorted_block[:5]
-    other_count = sum(count for _, count in sorted_block[5:])+cat_other
+    other_count = sum(count for _, count in sorted_block[5:]) + cat_other
     labels2 = [cate for cate, _ in top_5]
     sizes2 = [count for _, count in top_5]
     if other_count > 0:
@@ -150,6 +165,10 @@ def Draw_Chart():
 
 
 def start_analysis(simple_type):
+    global schematic, Cla_Block
+    Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
+                 "其他岩石": [], "石英": [], "矿类": [], "砂土类": [], "末地类": [], "地狱类": [], "海晶类": [],
+                 "粘土类": [], "红石": [], "铁类": [], "其他": []}
     count_table.delete(*count_table.get_children())
     Block.clear()
     if not file_path:
@@ -196,12 +215,14 @@ def start_analysis(simple_type):
                 Cla_Block[type].append((Block[val], val))
             else:
                 Cla_Block["其他"].append((Block[val], val))
-        Draw_Chart()
         label_bottom.config(
             text=f"Size体积: {size_x}x{size_y}x{size_z} | Number数量: {num} | Density密度: {num / (size_x * size_y * size_z) * 100:.2f}% | Times倍数: {time} | Types种类: {len(Block)}")
+
+        Draw_Chart()
         numbers = [item[1] for item in list(Block.items())]
-        print(numbers)
+        print(f"{numbers},{Block}")
         stat=statistics(numbers)
+        if not stat: return
         a_mean.config(text="{:.1f}".format(stat[0]))
         a_median.config(text=stat[1])
         a_mode.config(text=stat[2])
@@ -211,6 +232,7 @@ def start_analysis(simple_type):
         a_iqr.config(text="{:.2f}".format(stat[6]))
         a_ske.config(text="{:.2f}".format(stat[7]))
         a_ci.config(text=f"[{"{:.0f}".format(stat[8])},{"{:.0f}".format(stat[9])}]")
+
 
 
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
@@ -224,7 +246,7 @@ def start_analysis(simple_type):
 # Tkinter Setting
 litem = tk.Tk()
 litem.title(f"Litematica Viewer投影查看器 v{APP_VERSION}")
-litem.geometry("1280x720")
+litem.geometry("1520x960")
 litem.iconbitmap("icon.ico")
 litem.configure(bg=color_map[2])
 litem.attributes("-alpha", 0.9)
@@ -241,6 +263,12 @@ menu_analysis.add_command(label="Output导出", command=lambda:output_data(False
 menu_analysis.add_command(label="ClassifiedOutput分类导出", command=lambda:output_data(True), font=("Arial", 10))
 menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:start_analysis(True), font=("Arial", 10))
 menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:start_analysis(False), font=("Arial", 10))
+menu_analysis.add_command(label="SpawnRegularShape生成图形投影", command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
+                                                        (entry_x.get(),entry_y.get(),entry_z.get()),
+                                                        (entry_length.get(),entry_width.get(),entry_height.get()),
+                                                        bool(chollow), int(entry_thickness.get() if entry_thickness.get() else 0),
+                                                        [cu.get(),cd.get(),cl.get(),cr.get(),cf.get(),cb.get()]), font=("Arial", 10))
+menu_analysis.add_command(label="FillSpecificBlock替换特定方块", command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), entry_spawn2.get() if entry_spawn2.get() else file_name.split(".")[0]+"_Modified"), font=("Arial", 10))
 menu.add_cascade(label="DataAnalysis数据分析", menu=menu_analysis, font=("Arial", 20))
 menu_AnaSet = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Setting设置",menu=menu_AnaSet, font=("Arial", 20))
@@ -387,24 +415,24 @@ a_ske = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map[1], fg=
 a_ske.grid(row=3, column=3, padx=5, pady=5)
 a_ci = tk.Label(frame_stati, text="[0,0]", font=("Arial", 12), bg=color_map[1], fg=color_map[2])
 a_ci.grid(row=3, column=5, padx=5, pady=5)
-
 # lith容器
 frame_spawn = tk.Frame(litem, bg=color_map[1])
 hide(frame_spawn)
+
 # - 右容器上部：frame_spawn_new
 frame_spawn_new = tk.Frame(frame_spawn, bg=color_map[0])
 frame_spawn_new.pack(side=tk.TOP, fill=tk.X,  padx=20)
 frame_new_title = tk.Label(frame_spawn_new, text="生成图形投影", font=("Arial", 18), bg=color_map[0], fg=color_map[3])
 frame_new_title.grid(row=0, column=0, padx=5, pady=5, columnspan=4)
 # -- ID 输入框
-label_id = tk.Label(frame_spawn_new, text="ID", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_id = tk.Label(frame_spawn_new, text="方块ID", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_id.grid(row=1, column=0, padx=5, pady=5)
 entry_id = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_id.grid(row=1, column=1, padx=5, pady=5, columnspan=3)
 # -- XYZ 长宽高输入框
-label_xyz = tk.Label(frame_spawn_new, text="X,Y,Z", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_xyz = tk.Label(frame_spawn_new, text="XYZ", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_xyz.grid(row=2, column=0, padx=5, pady=5)
-label_lwh = tk.Label(frame_spawn_new, text="长,宽,高", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_lwh = tk.Label(frame_spawn_new, text="宽,高,长", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_lwh.grid(row=3, column=0, padx=5, pady=5)
 entry_x = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_x.grid(row=2, column=1, padx=2, pady=5)
@@ -413,26 +441,26 @@ entry_y.grid(row=2, column=2, padx=2, pady=5)
 entry_z = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_z.grid(row=2, column=3, padx=2, pady=5)
 entry_length = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_length.grid(row=3, column=1, padx=2, pady=5)
+entry_length.grid(row=3, column=3, padx=2, pady=5)
 entry_width = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_width.grid(row=3, column=2, padx=2, pady=5)
 entry_height = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_height.grid(row=3, column=3, padx=2, pady=5)
+entry_height.grid(row=3, column=1, padx=2, pady=5)
 # -- Hollow 单选框和 Thickness 输入框
-chollow = tk.BooleanVar()
-lable_thickness = tk.Label(frame_spawn_new, text="Thickness", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+chollow = tk.IntVar()
+lable_thickness = tk.Label(frame_spawn_new, text="厚度\nThickness", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 lable_thickness.grid(row=4, column=0, padx=5, pady=5)
 entry_thickness = tk.Entry(frame_spawn_new, width=13, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_thickness.grid(row=4, column=1, padx=5, pady=5, columnspan=2)
-check_hollow = tk.Checkbutton(frame_spawn_new, text="Hollow", variable=chollow, bg=color_map[0], fg=color_map[3], font=("Arial", 10))
+check_hollow = tk.Checkbutton(frame_spawn_new, text="空心Hollow", variable=chollow, bg=color_map[0], fg=color_map[3], font=("Arial", 10))
 check_hollow.grid(row=5, column=0, padx=5, pady=5)
 # -- 上下左右前后复选框
-cu = tk.BooleanVar()
-cd = tk.BooleanVar()
-cl = tk.BooleanVar()
-cr = tk.BooleanVar()
-cf = tk.BooleanVar()
-cb = tk.BooleanVar()
+cu = tk.IntVar(value=1)
+cd = tk.IntVar(value=1)
+cl = tk.IntVar(value=1)
+cr = tk.IntVar(value=1)
+cf = tk.IntVar(value=1)
+cb = tk.IntVar(value=1)
 check_up = tk.Checkbutton(frame_spawn_new, text="上", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cu)
 check_up.grid(row=5, column=1, padx=2, pady=2)
 check_down = tk.Checkbutton(frame_spawn_new, text="下", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cd)
@@ -446,21 +474,21 @@ check_front.grid(row=6, column=2, padx=2, pady=2)
 check_back = tk.Checkbutton(frame_spawn_new, text="后", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cb)
 check_back.grid(row=6, column=3, padx=2, pady=2)
 
-label_spawn = tk.Label(frame_spawn_new, text="FileName", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn = tk.Label(frame_spawn_new, text="文件名", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_spawn.grid(row=7, column=0, padx=5, pady=5)
 entry_spawn = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_spawn.grid(row=7, column=1, columnspan=3,padx=2, pady=2)
 
-x,y,z = entry_x.get(),entry_y.get(),entry_z.get()
-l,w,h = entry_length.get(),entry_width.get(),entry_height.get()
 btn_spawn = tk.Button(frame_spawn_new, text="Spawn生成", font=("Arial", 10, "bold"),
                       command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
-                                                        (x,y,z) if x and y and z else (0,0,0),
-                                                        (l,w,h) if l and w and h else (0,0,0),
-                                                        chollow, entry_thickness.get(),
-                                                        [cu,cd,cl,cr,cf,cb]))
+                                                        (entry_x.get(),entry_y.get(),entry_z.get()),
+                                                        (entry_length.get(),entry_width.get(),entry_height.get()),
+                                                        bool(chollow), int(entry_thickness.get() if entry_thickness.get() else 0),
+                                                        [cu.get(),cd.get(),cl.get(),cr.get(),cf.get(),cb.get()]))
 btn_spawn.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
 btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=2)
+label_warn = tk.Label(frame_spawn_new, text="Hollow Not Usable", font=("Arial", 10), bg=color_map[3], fg=color_map[4])
+label_warn.grid(row=8, column=2, padx=5, pady=5, columnspan=2)
 
 # - 右容器下部：frame_spawn_change
 frame_spawn_change = tk.Frame(frame_spawn, bg=color_map[0])
@@ -469,29 +497,41 @@ frame_change_title = tk.Label(frame_spawn_change, text="替换特定方块", fon
 frame_change_title.grid(row=0, column=0, padx=5, pady=20, columnspan=4)
 
 # -- Limit 标签和 XYZ 输入框
-label_limit = tk.Label(frame_spawn_change, text="Limit", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
-label_limit.grid(row=1, column=0, padx=5, pady=5)
-entry_limit_x = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_limit_x.grid(row=1, column=1, padx=2, pady=5)
-entry_limit_y = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_limit_y.grid(row=1, column=2, padx=2, pady=5)
-entry_limit_z = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_limit_z.grid(row=1, column=3, padx=2, pady=5)
+label_min = tk.Label(frame_spawn_change, text="最小限制\nMinimize\nLimit XYZ", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_min.grid(row=1, column=0, padx=5, pady=5)
+entry_min_x = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_min_x.grid(row=1, column=1, padx=2, pady=5)
+entry_min_y = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_min_y.grid(row=1, column=2, padx=2, pady=5)
+entry_min_z = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_min_z.grid(row=1, column=3, padx=2, pady=5)
+label_max = tk.Label(frame_spawn_change, text="最大限制\nMaximize\nLimit XYZ", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_max.grid(row=2, column=0, padx=5, pady=5)
+entry_max_x = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_max_x.grid(row=2, column=1, padx=2, pady=5)
+entry_max_y = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_max_y.grid(row=2, column=2, padx=2, pady=5)
+entry_max_z = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
+entry_max_z.grid(row=2, column=3, padx=2, pady=5)
 
 # -- Change 标签和多行输入框
-label_change = tk.Label(frame_spawn_change, text="Change", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
-label_change.grid(row=2, column=0, padx=5, pady=5)
+label_change = tk.Label(frame_spawn_change, text="替换组Change", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_change.grid(row=3, column=0, padx=5, pady=5)
 text_change = tk.Text(frame_spawn_change,width=20, height=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-text_change.grid(row=2, column=1, columnspan=3, padx=5, pady=5)
+intertial = "{\"minecraft:old\":\"minecraft:new\",...}"
+text_change.insert("1.0", intertial)
+text_change.grid(row=3, column=1, columnspan=3, padx=5, pady=5)
 
-label_spawn2 = tk.Label(frame_spawn_change, text="FileName", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
-label_spawn2.grid(row=3, column=0, padx=5, pady=5)
+label_spawn2 = tk.Label(frame_spawn_change, text="文件名", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn2.grid(row=4, column=0, padx=5, pady=5)
 entry_spawn2 = tk.Entry(frame_spawn_change, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-entry_spawn2.grid(row=3, column=1, columnspan=3,padx=2, pady=2)
+entry_spawn2.grid(row=4, column=1, columnspan=3,padx=2, pady=2)
 
-btn_spawn2 = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"))
+btn_spawn2 = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"), command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), entry_spawn2.get() if entry_spawn2.get() else file_name.split(".")[0]+"_Modified"))
 btn_spawn2.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
-btn_spawn2.grid(row=4, column=0, padx=2, pady=2, columnspan=2)
+btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=2)
+label_warn2 = tk.Label(frame_spawn_change, text="Nothing", font=("Arial", 10), bg=color_map[3], fg=color_map[4])
+label_warn2.grid(row=5, column=2, padx=5, pady=5, columnspan=2)
 
 litem.mainloop()
 
