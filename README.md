@@ -32,7 +32,8 @@ A light Viewer of Litematica files
 
 # 后续更新内容Updates
 
-* [X]  导出更新  export update
-* [X]  数据分析PLUS analysis chart
-* [X]  填充类特定方块 fill specific blocks
 * [ ]  预览图/3D图 3D Preview
+* [ ]  可执行文件 EXE File
+
+Warning警告⚠ : 记得下载Python3.13和附属库
+
