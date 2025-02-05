@@ -20,6 +20,8 @@ A light Viewer of Litematica files
 * `Spawn Regular Shape` A Light Tool to generate a regular shape
 * `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own setting limitations
 
+Allow output csv classified file and shows more analysis data
+
 一个轻量便捷的投影查看器
 
 * `导入` 导入投影文件
@@ -29,6 +31,8 @@ A light Viewer of Litematica files
 * `简洁分析` 轻量分析，只会显示方块名与数量
 * `生成图形投影` 快捷生成一个常规立方体
 * `替换特定方块` 快速替换/限制投影里的不同方块
+
+现在允许导出CSV分类文件和实现了更多的分析数据
 
 # 后续更新内容Updates
 
