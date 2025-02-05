@@ -15,13 +15,13 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.3.2'
+APP_VERSION = '0.5.1'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
 Block = {}
 Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
-                     "其他岩石": [], "石英": [], "矿类": [], "砂土类": [], "末地类": [], "地狱类": [], "海晶类": [],
+                     "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                      "粘土类": [], "红石":[], "铁类":[], "其他": []}
 images = {}
 color_map = [
@@ -167,7 +167,7 @@ def Draw_Chart():
 def start_analysis(simple_type):
     global schematic, Cla_Block
     Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
-                 "其他岩石": [], "石英": [], "矿类": [], "砂土类": [], "末地类": [], "地狱类": [], "海晶类": [],
+                 "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                  "粘土类": [], "红石": [], "铁类": [], "其他": []}
     count_table.delete(*count_table.get_children())
     Block.clear()
@@ -430,9 +430,9 @@ label_id.grid(row=1, column=0, padx=5, pady=5)
 entry_id = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_id.grid(row=1, column=1, padx=5, pady=5, columnspan=3)
 # -- XYZ 长宽高输入框
-label_xyz = tk.Label(frame_spawn_new, text="XYZ", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_xyz = tk.Label(frame_spawn_new, text="原点XYZ", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_xyz.grid(row=2, column=0, padx=5, pady=5)
-label_lwh = tk.Label(frame_spawn_new, text="宽,高,长", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_lwh = tk.Label(frame_spawn_new, text="宽高长Size", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_lwh.grid(row=3, column=0, padx=5, pady=5)
 entry_x = tk.Entry(frame_spawn_new, width=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_x.grid(row=2, column=1, padx=2, pady=5)
@@ -461,20 +461,20 @@ cl = tk.IntVar(value=1)
 cr = tk.IntVar(value=1)
 cf = tk.IntVar(value=1)
 cb = tk.IntVar(value=1)
-check_up = tk.Checkbutton(frame_spawn_new, text="上", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cu)
+check_up = tk.Checkbutton(frame_spawn_new, text="上U", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cu)
 check_up.grid(row=5, column=1, padx=2, pady=2)
-check_down = tk.Checkbutton(frame_spawn_new, text="下", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cd)
+check_down = tk.Checkbutton(frame_spawn_new, text="下D", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cd)
 check_down.grid(row=5, column=2, padx=2, pady=2)
-check_left = tk.Checkbutton(frame_spawn_new, text="左", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cl)
+check_left = tk.Checkbutton(frame_spawn_new, text="左L", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cl)
 check_left.grid(row=5, column=3, padx=2, pady=2)
-check_right = tk.Checkbutton(frame_spawn_new, text="右", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cr)
+check_right = tk.Checkbutton(frame_spawn_new, text="右R", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cr)
 check_right.grid(row=6, column=1, padx=2, pady=2)
-check_front = tk.Checkbutton(frame_spawn_new, text="前", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cf)
+check_front = tk.Checkbutton(frame_spawn_new, text="前F", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cf)
 check_front.grid(row=6, column=2, padx=2, pady=2)
-check_back = tk.Checkbutton(frame_spawn_new, text="后", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cb)
+check_back = tk.Checkbutton(frame_spawn_new, text="后B", bg=color_map[0], fg=color_map[3], font=("Arial", 10), variable=cb)
 check_back.grid(row=6, column=3, padx=2, pady=2)
 
-label_spawn = tk.Label(frame_spawn_new, text="文件名", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn = tk.Label(frame_spawn_new, text="文件名File", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_spawn.grid(row=7, column=0, padx=5, pady=5)
 entry_spawn = tk.Entry(frame_spawn_new, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_spawn.grid(row=7, column=1, columnspan=3,padx=2, pady=2)
@@ -489,7 +489,8 @@ btn_spawn.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
 btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=2)
 label_warn = tk.Label(frame_spawn_new, text="Hollow Not Usable", font=("Arial", 10), bg=color_map[3], fg=color_map[4])
 label_warn.grid(row=8, column=2, padx=5, pady=5, columnspan=2)
-
+label_tip = tk.Label(frame_spawn_new, text="所有ID输入需以\"minecraft:ID\"为输入形式", font=("Arial", 10, "bold"), bg=color_map[0], fg=color_map[4])
+label_tip.grid(row=9, column=0, padx=5, pady=5, columnspan=4)
 # - 右容器下部：frame_spawn_change
 frame_spawn_change = tk.Frame(frame_spawn, bg=color_map[0])
 frame_spawn_change.pack(side=tk.TOP, fill=tk.X, pady=10, padx=20)
@@ -515,14 +516,12 @@ entry_max_z = tk.Entry(frame_spawn_change, width=5, bg=color_map[2], fg=color_ma
 entry_max_z.grid(row=2, column=3, padx=2, pady=5)
 
 # -- Change 标签和多行输入框
-label_change = tk.Label(frame_spawn_change, text="替换组Change", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_change = tk.Label(frame_spawn_change, text="替换表\nChange", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_change.grid(row=3, column=0, padx=5, pady=5)
 text_change = tk.Text(frame_spawn_change,width=20, height=5, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
-intertial = "{\"minecraft:old\":\"minecraft:new\",...}"
-text_change.insert("1.0", intertial)
 text_change.grid(row=3, column=1, columnspan=3, padx=5, pady=5)
 
-label_spawn2 = tk.Label(frame_spawn_change, text="文件名", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
+label_spawn2 = tk.Label(frame_spawn_change, text="文件名File", font=("Arial", 12), bg=color_map[0], fg=color_map[3])
 label_spawn2.grid(row=4, column=0, padx=5, pady=5)
 entry_spawn2 = tk.Entry(frame_spawn_change, width=20, bg=color_map[2], fg=color_map[1], font=("Arial", 10))
 entry_spawn2.grid(row=4, column=1, columnspan=3,padx=2, pady=2)
@@ -532,6 +531,8 @@ btn_spawn2.configure(bg=color_map[2], fg=color_map[0], relief='ridge')
 btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=2)
 label_warn2 = tk.Label(frame_spawn_change, text="Nothing", font=("Arial", 10), bg=color_map[3], fg=color_map[4])
 label_warn2.grid(row=5, column=2, padx=5, pady=5, columnspan=2)
+label_tip2 = tk.Label(frame_spawn_change, text="替换表以{\"minecraft:旧方块\":\n\"minecraft:新方块\",...后续同上}为输入形式\n双引号是必须的", font=("Arial", 10, "bold"), bg=color_map[0], fg=color_map[4])
+label_tip2.grid(row=6, column=0, padx=5, pady=5, columnspan=4)
 
 litem.mainloop()
 
