@@ -3,7 +3,10 @@ LitematicaViewer投影查看器 v0.5
 
 ### Minecraft tool - A tool make easy to check litematica files 让我的世界投影查看更加的轻量便捷
 
-[Bilibili宣传视频](https://www.bilibili.com/video/BV1dq6yYoEvi/?spm_id_from=333.1387.homepage.video_card.click&vd_source=20c164cb28b2da114329d8728dad750f)
+[![ver](https://img.shields.io/badge/Version-beta_0.5.2-red)]()
+[![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/v/release/Albertchen857/LitematicaViewer)]()
+[![三连](https://img.shields.io/badge/-一键三连-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1dq6yYoEvi/?spm_id_from=333.1387.homepage.video_card.click&vd_source=20c164cb28b2da114329d8728dad750f)
+[![转发](https://img.shields.io/badge/-转发-00A1D6?logo=bilibili&logoColor=white)](https://space.bilibili.com/3494373232741268)
 
 A light Viewer of Litematica files
 
@@ -17,9 +20,6 @@ A light Viewer of Litematica files
 * `Spawn Regular Shape` A Light Tool to generate a regular shape
 * `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own setting limitations
 
-CSV chart file is available for output now
-Shows more Analysis Data/Chart in now (include Pie chart and Statistics)
-
 一个轻量便捷的投影查看器
 
 * `导入` 导入投影文件
@@ -30,9 +30,9 @@ Shows more Analysis Data/Chart in now (include Pie chart and Statistics)
 * `生成图形投影` 快捷生成一个常规立方体
 * `替换特定方块` 快速替换/限制投影里的不同方块
 
-现在支持导出CSV表格文件和显示显示更多的投影统计数据 (包括饼状图分类数据 和 统计学数据)
-
 # 后续更新内容Updates
-* [ ]  预览图/3D图 3D Preview
-* [ ]  可执行文件 EXE file
 
+* [X]  导出更新  export update
+* [X]  数据分析PLUS analysis chart
+* [X]  填充类特定方块 fill specific blocks
+* [ ]  预览图/3D图 3D Preview
