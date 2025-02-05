@@ -15,7 +15,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.5.1'
+APP_VERSION = 'beta 0.5.1'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
