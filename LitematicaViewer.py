@@ -4,6 +4,7 @@ from litemapy import Schematic, Region, BlockState
 from PIL import Image, ImageTk
 from Litmatool import *
 from Structure import *
+from liteVersonFix import *
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -15,7 +16,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = 'beta 0.5.1'
+APP_VERSION = '0.5.3'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -171,6 +172,7 @@ def start_analysis(simple_type):
                  "粘土类": [], "红石": [], "铁类": [], "其他": []}
     count_table.delete(*count_table.get_children())
     Block.clear()
+    print(file_path)
     if not file_path:
         import_file()
     schematic = Schematic.load(file_path)
@@ -273,8 +275,15 @@ menu.add_cascade(label="DataAnalysis数据分析", menu=menu_analysis, font=("Ar
 menu_AnaSet = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Setting设置",menu=menu_AnaSet, font=("Arial", 20))
 menu_AnaSet.add_checkbutton(label="DoAnalysisEntity是否分析实体",variable=DoEntity, font=("Arial", 10))
+menu_AnaSet.add_separator()
 menu_AnaSet.add_checkbutton(label="ShowLithemPannel是否显示投影面板",variable=DoLifr,command=lambda:hide(frame_spawn), font=("Arial", 10))
 menu_AnaSet.add_checkbutton(label="ShowStatisticsPannel是否显示统计面板",variable=DoStat,command=lambda:hide(frame_data), font=("Arial", 10))
+menu_Func = tk.Menu(menu, tearoff=0)
+menu.add_cascade(label="Function功能",menu=menu_Func, font=("Arial", 20))
+menu_Func.add_command(label="HeptaVersual跨版本 1.17+", command=lambda:litVerFix(7), font=("Arial", 10))
+menu_Func.add_command(label="PentaVersual跨版本 1.15+", command=lambda:litVerFix(5), font=("Arial", 10))
+menu_Func.add_command(label="TriVersual跨版本 1.13+", command=lambda:litVerFix(4), font=("Arial", 10))
+menu_Func.add_separator()
 menu_Help = tk.Menu(menu, tearoff=0)
 menu.add_cascade(label="Help帮助",menu=menu_Help, font=("Arial", 20))
 menu_Help.add_command(label="About关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=("Arial", 10))

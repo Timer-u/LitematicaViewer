@@ -1,0 +1,5 @@
+litemapy==0.10.0b0
+pillow==11.1.0
+scipy==1.15.1
+matplotlib==3.10.0
+amulet-nbt==2.1.3

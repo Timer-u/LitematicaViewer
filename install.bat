@@ -1,6 +1,1 @@
-pip install litemapy
-pip install pillow
-pip install scipy
-pip install pygame
-pip install matplotlib
-pause
+pip install -r requirements.txt
