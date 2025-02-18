@@ -3,8 +3,8 @@ import numpy as np
 import scipy.stats as stats
 #from pygame.display import mode_ok
 
-json_data = json.load(open('lang/zh_cn.json', 'r', encoding='utf-8'))
-json_cati = json.load(open('lang/catigory.json', 'r', encoding='utf-8'))
+json_data = json.load(open('../lang/zh_cn.json', 'r', encoding='utf-8'))
+json_cati = json.load(open('../lang/catigory.json', 'r', encoding='utf-8'))
 
 def convert_units(number):
     units = {'箱': 54 * 27 * 64, '盒': 27 * 64, '组': 64, '个': 1}

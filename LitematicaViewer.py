@@ -1,10 +1,9 @@
-import tkinter as tk
-from tkinter import filedialog, ttk, Text
-from litemapy import Schematic, Region, BlockState
+from tkinter import filedialog
+from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
-from Litmatool import *
-from Structure import *
-from liteVersonFix import *
+from script.Litmatool import *
+from script.Structure import *
+from script.liteVersonFix import *
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -245,15 +244,15 @@ def start_analysis(simple_type):
             count = count * 1
         insert_table(block_state, count, simple_type)
 
-# Tkinter Setting
-litem = tk.Tk()
-litem.title(f"Litematica Viewer投影查看器 v{APP_VERSION}")
-litem.geometry("1520x960")
-litem.iconbitmap("icon.ico")
-litem.configure(bg=color_map[2])
-litem.attributes("-alpha", 0.9)
+import tkinter as tk
+from tkinter import ttk
 
-# MENU
+# 创建主窗口
+litem = tk.Tk()
+litem.title("Litematica Viewer投影查看器 v0.5.3")
+litem.geometry("1520x960")
+litem.configure(bg="#f8f9fa")
+
 menu = tk.Menu(litem)
 DoEntity = tk.IntVar(value=1)
 DoLifr = tk.IntVar(value=1)
@@ -310,8 +309,46 @@ btn_bilibili = tk.Button(frame_top, text="Bilibili", command=lambda:webbrowser.o
 btn_bilibili.configure(bg="#FF6699", fg=color_map[2],relief='groove')
 btn_bilibili.pack(side=tk.RIGHT, padx=5, pady=5)
 
+
+# 创建 PanedWindow
+paned_window = ttk.PanedWindow(litem, orient=tk.HORIZONTAL)
+paned_window.pack(fill=tk.BOTH, expand=True)
+
 # 中容器
-frame_middle = tk.Frame(litem, bg=color_map[0])
+frame_middle = tk.Frame(paned_window, bg="#3399ff")
+paned_window.add(frame_middle, weight=1)  # 初始占50%
+
+# lith容器
+frame_spawn = tk.Frame(paned_window, bg="#0066cc")
+paned_window.add(frame_spawn, weight=1)  # 初始占50%
+
+# 调整样式
+style = ttk.Style()
+style.theme_use("default")
+style.configure("TFrame", background="#f8f9fa")
+style.configure("TPanedwindow", background="#f8f9fa")
+style.configure("TPanedwindow.Sash", background="#3399ff")
+
+# 中容器顶部
+frame_middle_top = tk.Frame(frame_middle, bg="#3399ff")
+frame_middle_top.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
+
+label_middle = tk.Label(frame_middle_top, text="LitematicaViewer投影查看器", font=("Helvetica", 30, 'bold'))
+label_middle.configure(bg="#3399ff", fg="white")
+label_middle.pack(fill=tk.Y)
+
+# 中容器表格
+frame_chart = tk.Frame(frame_middle, bg="#3399ff")
+frame_chart.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+
+
+# 中容器
+frame_middle = tk.Frame(paned_window, bg=color_map[0])
+paned_window.add(frame_middle)
+
+frame_middle = tk.Frame(paned_window, bg=color_map[0])
+paned_window.add(frame_middle)
 frame_middle.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 # - 中容器顶部
 frame_middle_top = tk.Frame(frame_middle, bg=color_map[0])
@@ -334,9 +371,7 @@ label_times.pack(side=tk.LEFT, padx=5)
 
 entry_times = tk.Entry(frame_Times, width=10, bg=color_map[2], fg=color_map[1], font=("Helvetica", 10))
 entry_times.pack(side=tk.RIGHT, padx=5)
-# - 中容器DEC
-#frame_middle_dec = tk.Frame(frame_middle)
-#frame_middle_dec.pack()
+
 underscore1 = tk.Frame(frame_middle, bg=color_map[2])
 underscore1.pack( padx=40, pady=10)
 
@@ -345,8 +380,7 @@ table_sty.configure("Treeview", font=("Arial", 12), rowheight=25, background=col
 table_sty.configure("Treeview.Heading", font=("Helvetica", 14, "bold"), background=color_map[1], foreground=color_map[3])
 table_sty.map('Treeview', background=[('selected', color_map[0])])
 # 中容器表格
-frame_chart = tk.Frame(frame_middle, bg=color_map[3])
-frame_chart.configure(background=color_map[0])
+frame_chart = tk.Frame(frame_middle, bg=color_map[3], background=color_map[0])
 frame_chart.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=5)
 
 sroll = tk.Scrollbar(frame_chart, orient="vertical")
@@ -364,6 +398,7 @@ count_table.column("unit", width=50)
 count_table.column("properties", width=200)
 count_table.config(height=20)
 count_table.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=10)
+
 #统计容器
 frame_data = tk.Frame(frame_chart, bg=color_map[1])
 frame_data.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -424,10 +459,11 @@ a_ske = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map[1], fg=
 a_ske.grid(row=3, column=3, padx=5, pady=5)
 a_ci = tk.Label(frame_stati, text="[0,0]", font=("Arial", 12), bg=color_map[1], fg=color_map[2])
 a_ci.grid(row=3, column=5, padx=5, pady=5)
-# lith容器
-frame_spawn = tk.Frame(litem, bg=color_map[1])
-hide(frame_spawn)
 
+# lith容器
+frame_spawn = tk.Frame(paned_window, bg=color_map[1])
+paned_window.add(frame_spawn)
+hide(frame_spawn)
 # - 右容器上部：frame_spawn_new
 frame_spawn_new = tk.Frame(frame_spawn, bg=color_map[0])
 frame_spawn_new.pack(side=tk.TOP, fill=tk.X,  padx=20)
