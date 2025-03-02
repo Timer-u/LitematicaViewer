@@ -40,6 +40,7 @@ Allow output csv classified file and shows more analysis data
 
 * [ ]  预览图/3D图 3D Preview
 * [ ]  可执行文件 EXE File
+* [ ]  日志&历史文件 Logs & Historys
 
 Warning警告⚠ : 记得下载Python3.13和附属库
 
