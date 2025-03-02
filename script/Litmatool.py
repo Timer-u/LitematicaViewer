@@ -1,10 +1,9 @@
 import json, subprocess
 import numpy as np
 import scipy.stats as stats
-#from pygame.display import mode_ok
 
 json_data = json.load(open('../lang/zh_cn.json', 'r', encoding='utf-8'))
-json_cati = json.load(open('../lang/catigory.json', 'r', encoding='utf-8'))
+
 
 def convert_units(number):
     units = {'箱': 54 * 27 * 64, '盒': 27 * 64, '组': 64, '个': 1}
@@ -16,8 +15,15 @@ def convert_units(number):
             number %= value
     return result if result else "0个"
 
-def cn_translate(id):
-    return json_data.get(id, id)
+def cn_translate(id, key: bool = True, types = "Blocks") -> object:
+    '''
+
+    :param id: Object ID translate
+    :param key: Justify is translate from value to key
+    :param type: transfer dist type
+    :return: Object Chinese name
+    '''
+    return json_data[types].get(id, id) if key else json_data[types][id]
 
 def manual_install_pk():
     try:
@@ -31,7 +37,7 @@ def find_keys_by_value_in_list(dictionary, target_value):
     return [key for key, value_list in dictionary.items() if target_value in value_list]
 
 def Category_Tran(data):
-    for key, value_list in json_cati.items():
+    for key, value_list in json_data["Category"].items():
         for prop in data.split("_"):
             if prop in value_list:
                 return key
@@ -43,17 +49,16 @@ def statistics(data):
     mean = np.mean(data)
     median = np.median(data)
     mode = stats.mode(data)
-    ran = np.ptp(data)
     std_dev = np.std(data, ddof=1)
-    std_err = stats.sem(data)
     IQR = np.percentile(data, 75)-np.percentile(data, 25)
-    skewness = stats.skew(data)
-    confidence_level = 0.95
-    margin_of_error = std_err * stats.t.ppf((1 + confidence_level) / 2, len(data) - 1)  # 置信区间边界
-    ci_lower = mean - margin_of_error
-    ci_upper = mean + margin_of_error
-    return [mean,median,mode,ran,std_dev,std_err,IQR,skewness,ci_lower,ci_upper]
+    return [IQR,mean,median,mode,std_dev]
 
+def id_tran_name(id: object) -> object:
+    """
+
+    :rtype: object
+    """
+    return id.split(':')[1]
 
 if __name__ == "__main__":
     pass
