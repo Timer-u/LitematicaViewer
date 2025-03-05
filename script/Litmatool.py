@@ -43,6 +43,7 @@ def Category_Tran(data):
                 return key
     return ""
 
+
 def statistics(data):
     print(data)
     if not data: return []

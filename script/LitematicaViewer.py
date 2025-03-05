@@ -2,6 +2,7 @@ from tkinter import filedialog
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
 
+import LitRender
 from script.Litmatool import *
 from script.Structure import *
 from script.liteVersonFix import *
@@ -27,7 +28,6 @@ Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃"
                      "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                      "粘土类": [], "红石":[], "铁类":[], "容器":[], "液体":[], "其他": []}
 images = {}
-LogVar = ["DoEntity","DoLifr","Do,Stat","DoAnal"]
 
 data = json.load(open('../lang/data.json', 'r', encoding='utf-8'))
 color_map = data["Color_map"]
@@ -185,13 +185,13 @@ def start_analysis(simple_type):
     Block.clear()
     count_table.delete(*count_table.get_children())
     schematic = Schematic.load(file_path)
+    num = 0
     print(f"Schematic loaded: {schematic}")
     for region_index, region in enumerate(schematic.regions.values()):
         print(f"Analyzing region {region_index + 1}")
         size_x = region.maxx() - region.minx() + 1
         size_y = region.maxy() - region.miny() + 1
         size_z = region.maxz() - region.minz() + 1
-        num = 0
         for x in range(size_x):
             for y in range(size_y):
                 for z in range(size_z):
@@ -260,7 +260,11 @@ def start_analysis(simple_type):
         except:
             count = count * 1
         insert_table(block_state, count, simple_type)
-    print(Block_pos)
+    if Do3d.get():
+        #print(Block_pos)
+        if Li3d.get() and num>3000:
+            LitRender.main_render_loop(Block_pos,bool(False))
+        LitRender.main_render_loop(Block_pos,bool(Sp3d.get()))
 
 import tkinter as tk
 from tkinter import ttk
@@ -272,18 +276,20 @@ if __name__ == "__main__":
     litem.geometry("1220x860")
     litem.configure(bg=color_map["MC"])
 
+    LogVar = ["DoEntity", "DoLifr", "Do,Stat", "DoAnal", "Do3d", "Li3d", "Sp3d"]
     menu = tk.Menu(litem)
     DoEntity = tk.IntVar()
     DoLifr = tk.IntVar()
     DoStat = tk.IntVar()
     DoAnal = tk.IntVar()
+    Do3d = tk.IntVar()
+    Li3d = tk.IntVar()
+    Sp3d = tk.IntVar()
     if not os.path.exists(log_path + "log.txt"):
         with open(log_path + "log.txt", "w") as file:
-            file.write("1111")  # d0:Entity, d1-3:Frame
-            DoEntity = tk.IntVar(value=1)
-            DoLifr = tk.IntVar(value=1)
-            DoStat = tk.IntVar(value=1)
-            DoAnal = tk.IntVar(value=1)
+            file.write("1111111")  # d1:Entity, d2-4:Frame, d5-7:3D
+            for logvar in LogVar:
+                globals()[logvar] = tk.IntVar(value=1)
     else:
         with open(log_path + "log.txt", "r") as file:
             fr = file.read()
@@ -317,6 +323,10 @@ if __name__ == "__main__":
     menu_AnaSet.add_checkbutton(label="ShowLithemPannel是否显示投影面板",variable=DoLifr,command=lambda:hide(frame_spawn,DoLifr), font=("Arial", 10))
     menu_AnaSet.add_checkbutton(label="ShowStatisticsPannel是否显示统计面板",variable=DoStat,command=lambda:hide(frame_data,DoStat), font=("Arial", 10))
     menu_AnaSet.add_checkbutton(label="ShowAnalysisPannel是否显示分析面板", variable=DoAnal,command=lambda: hide(frame_middle,DoAnal), font=("Arial", 10))
+    menu_AnaSet.add_separator()
+    menu_AnaSet.add_checkbutton(label="Allow3DRander是否3D渲染", variable=Do3d, font=("Arial", 10))
+    menu_AnaSet.add_checkbutton(label="3DRanderLimit3D渲染限制|>3000", variable=Li3d, font=("Arial", 10))
+    menu_AnaSet.add_checkbutton(label="Rotate3DRander3D渲染是否旋转", variable=Sp3d, font=("Arial", 10))
     menu_Func = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="Function功能",menu=menu_Func, font=("Arial", 20))
     menu_Func.add_command(label="HeptaVersual跨版本 1.17+", command=lambda:litVerFix(7), font=("Arial", 10))
