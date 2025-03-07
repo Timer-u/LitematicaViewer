@@ -12,38 +12,63 @@ blocks = [((0, 17, 5), 'minecraft:piston'), ((0, 17, 6), 'minecraft:piston'), ((
 xl:int
 yl:int
 zl:int
-def draw_cube(position, color):
+def draw_cube(position, color, face:tuple, mode:int):
     """
     绘制一个立方体
+    :param mode: 0Full 1Half 2Carpet 3
+    :param face:
     :param position: 方块的原点位置 (x, y, z)
     :param color: 方块的颜色 (R, G, B)
     """
     x, y, z = position
-    x, y, z = (x - (xl / 2))/10, (y - (xl / 2))/10, (z - (xl / 2))/10
-    vertices = [
-        (x, y, z),
-        (x + 0.1, y, z),
-        (x + 0.1, y + 0.1, z),
-        (x, y + 0.1, z),
-        (x, y, z + 0.1),
-        (x + 0.1, y, z + 0.1),
-        (x + 0.1, y + 0.1, z + 0.1),
-        (x, y + 0.1, z + 0.1)
-    ]
+    x, y, z = (x - (xl / 2))/10, (y - (yl / 2))/10, (z - (zl / 2))/10
+    vertices = np.array([[[x, y, z],
+          [x + 0.1, y, z],
+          [x + 0.1, y + 0.1, z],
+          [x, y + 0.1, z],
+          [x, y, z + 0.1],
+          [x + 0.1, y, z + 0.1],
+          [x + 0.1, y + 0.1, z + 0.1],
+          [x, y + 0.1, z + 0.1]],
+          [[x, y, z],
+           [x + 0.1, y, z],
+           [x + 0.1, y + 0.05, z],
+           [x, y + 0.05, z],
+           [x, y, z + 0.1],
+           [x + 0.1, y, z + 0.1],
+           [x + 0.1, y + 0.05, z + 0.1],
+           [x, y + 0.05, z + 0.1]],
+          [[x + 0.05 , y , z],
+          [x + 0.05, y + 0.1, z],
+          [x + 0.05, y, z + 0.1],
+          [x + 0.05, y + 0.1, z + 0.1],
+          [x + 0.05 , y , z],
+          [x + 0.05, y + 0.1, z],
+          [x + 0.05, y, z + 0.1],
+          [x + 0.05, y + 0.1, z + 0.1]]
+    ])
 
     surfaces = [
-        (0, 1, 2, 3),
-        (3, 2, 6, 7),
-        (7, 6, 5, 4),
-        (4, 5, 1, 0),
+        (4, 0, 3, 7),
         (1, 5, 6, 2),
-        (4, 0, 3, 7)
-    ]
+        (3, 2, 6, 7),
+        (4, 5, 1, 0),
+        (7, 6, 5, 4),
+        (0, 1, 2, 3),
+    ] # LR UD FB
     glColor3fv(color)
     glBegin(GL_QUADS)
-    for surface in surfaces:
-        for vertex in surface:
-            glVertex3fv(vertices[vertex])
+    for i, is_enabled in enumerate(face):
+        if is_enabled:
+            if mode == 2:
+                for vertex in (4, 5, 1, 0):
+                    glVertex3fv(vertices[0,vertex])
+            elif mode == 3:
+                for vertex in range(4):
+                    glVertex3fv(vertices[2,vertex])
+            else:
+                for vertex in surfaces[i]:
+                    glVertex3fv(vertices[mode,vertex])
     glEnd()
 
 def CCrgb(image_path):
@@ -72,29 +97,34 @@ def render_world(blocks, rotation_angle):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
     gluLookAt(3, 3, 5, 0.5, 0.5, 0.5, 0, 1, 0) # 设置相机位置和方向
-    # 绕Y轴逆时针旋转
     glRotatef(-rotation_angle, 0, 1, 0) # 逆时针旋转
     for x,_ in enumerate(blocks):
         for y,_ in enumerate(blocks[x]):
             for z,_ in enumerate(blocks[x][y]):
-                if not blocks[x][y][z] or blocks[x][y][z]=='minecraft:tripwire': continue
-                elif not x or not y or not z or x==xl or y==yl or z==zl:
-                    pass
-                elif (isinstance(blocks[x+1][y][z],str) and isinstance(blocks[x-1][y][z],str) and
-                    isinstance(blocks[x][y+1][z], str) and isinstance(blocks[x][y-1][z],str) and
-                    isinstance(blocks[x][y][z+1], str) and isinstance(blocks[x][y][z-1],str)):
-                    blocks[x][y][z] = None
+                if not blocks[x][y][z] or blocks[x][y][z]=='minecraft:tripwire':
                     continue
+                elif not x or not y or not z or x==xl or y==yl or z==zl:
+                    fu: bool = False
+                    fd: bool = False
+                    pass
+                else:
+                    fu = isinstance(blocks[x][y + 1][z], str)
+                    fd = isinstance(blocks[x][y - 1][z], str)
+                    if isinstance(blocks[x + 1][y][z], str) and isinstance(blocks[x - 1][y][z], str) and fu and fd and isinstance(blocks[x][y][z + 1], str) and isinstance(blocks[x][y][z - 1], str):
+                        blocks[x][y][z] = None
+                        continue
+
+                mode = 1 if "slab" in str(blocks[x][y][z]) else 2 if "carpet" in str(blocks[x][y][z]) else 3 if "pane" in str(blocks[x][y][z]) else 0
+
                 try:
-                    #print(x,y,z)
                     color = CCrgb(f"../block/{blocks[x][y][z].split(":")[1]}.png")
                 except AttributeError:
                     continue
                 except FileNotFoundError as e:
-                    print(blocks[x][y][z])
                     color = fcid(blocks[x][y][z])
                     print(f"error:{e}")
-                draw_cube((x,y,z), color)
+                s = (True,True,not fu,not fd,True,True)
+                draw_cube((x,y,z), color,s,mode)
 
 def fcid(input_id) -> tuple:
     """
@@ -132,7 +162,7 @@ def main_render_loop(blocks, rotate:bool):
     print(pos_blocks)
 
     pygame.init()
-    display = (800, 600)
+    display = (300, 300)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     init_opengl(display)
     clock = pygame.time.Clock()
@@ -146,7 +176,8 @@ def main_render_loop(blocks, rotate:bool):
         if rotate:
             rotation_angle += rotation_speed * (clock.get_time() / 1000.0)
             rotation_angle %= 360
-        render_world(blocks, rotation_angle)
+        glRotatef(rotation_angle, 0, 1, 0)
+        render_world(pos_blocks, rotation_angle)
         pygame.display.flip()
         clock.tick(1)
 

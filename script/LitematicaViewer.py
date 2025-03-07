@@ -175,13 +175,14 @@ def Draw_Chart():
 
 
 def start_analysis(simple_type):
-    global schematic, Cla_Block
+    global schematic, Cla_Block, Block_pos
     print(file_path)
     if not file_path:
         import_file()
     Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
                  "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                  "粘土类": [], "红石": [], "铁类": [], "容器": [], "液体": [], "其他": []}
+    Block_pos = []
     Block.clear()
     count_table.delete(*count_table.get_children())
     schematic = Schematic.load(file_path)
