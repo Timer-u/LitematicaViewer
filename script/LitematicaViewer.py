@@ -1,9 +1,11 @@
 import threading
 from tkinter import filedialog
+from tkinter import ttk
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
 
-import LitRender
+import LitRender, easygui
+from script.LitRender import main_render_loop, OpenGLView
 from script.Litmatool import *
 from script.Structure import *
 from script.liteVersonFix import *
@@ -30,7 +32,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.6.1'
+APP_VERSION = '0.6.2'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -189,7 +191,7 @@ def Draw_Chart():
 
 
 def start_analysis(simple_type):
-    global schematic, Cla_Block, Block_pos
+    global schematic, Cla_Block, Block_pos, gl_view
     print(file_path)
     if not file_path:
         import_file()
@@ -261,9 +263,9 @@ def start_analysis(simple_type):
         me_type = "生电红石"
     elif redly>=0.1:
         me_type = "生电机器"
-    elif redly>=0.02:
+    elif redly>=0.01:
         me_type = "结构性机器"
-    elif redly<0.02:
+    elif redly<0.01:
         me_type = top1[0][0]+"建筑"
     a_m1.config(text=f"{redly*100:.1f}%")
     a_m2.config(text=f"{me_type}")
@@ -275,18 +277,22 @@ def start_analysis(simple_type):
         except:
             count = count * 1
         insert_table(block_state, count, simple_type)
+
     if Do3d.get():
-        #print(Block_pos)
-
+        gl_view.destroy()
         if Li3d.get() and num>3000:
-            if num>10000:
-                print("block num over 10000: stop rendering")
+            if num>6000:
+                check = easygui.boolbox("Block Number over 10000, keep rendering?")
+                print(check)
+                if not check: return
+                threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
                 return
-            threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
-        threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
-
-import tkinter as tk
-from tkinter import ttk
+            gl_view = OpenGLView(frame_3d, Block_pos, False, width=100, height=100, bg=color_map["PC"])
+        else:
+            gl_view = OpenGLView(frame_3d, Block_pos, bool(Sp3d.get()), width=100, height=100, bg=color_map["PC"])
+        gl_view.pack(fill=tk.BOTH, expand=True)
+        gl_view.after(1000, gl_view.redraw)
+    litem.update_idletasks()
 
 if __name__ == "__main__":
     # 创建主窗口
@@ -328,8 +334,8 @@ if __name__ == "__main__":
     menu_analysis.add_command(label="Import导入", command=import_file, font=("Arial", 10))
     menu_analysis.add_command(label="Output导出", command=lambda:output_data(False), font=("Arial", 10))
     menu_analysis.add_command(label="ClassifiedOutput分类导出", command=lambda:output_data(True), font=("Arial", 10))
-    menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:start_analysis(True), font=("Arial", 10))
-    #menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:start_analysis(False), font=("Arial", 10))
+    menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=("Arial", 10))
+    #menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=False).start(), font=("Arial", 10))
     menu_analysis.add_command(label="SpawnRegularShape生成图形投影", command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
                                                             (entry_length.get(),entry_width.get(),entry_height.get()),
@@ -355,6 +361,7 @@ if __name__ == "__main__":
     menu_Func.add_command(label="TriVersual跨版本 1.13+", command=lambda:litVerFix(4), font=("Arial", 10))
     menu_Func.add_separator()
     menu_Func.add_command(label="ContainerAnalysis容器分析", command=lambda:ConAly(), font=("Arial", 10))
+    menu_Func.add_command(label="3DRender手动3D渲染", command=lambda: threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start(), font=("Arial", 10))
     menu_Help = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="Help帮助",menu=menu_Help, font=("Arial", 20))
     menu_Help.add_command(label="About关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=("Arial", 10))
@@ -370,7 +377,7 @@ if __name__ == "__main__":
     btn_import = tk.Button(frame_top, text="Import导入", command=import_file, font=("Arial", 10))
     btn_import.configure(bg=color_map["MC"],fg=color_map["TT"],relief='ridge')
     btn_import.pack(side=tk.LEFT, padx=5, pady=5)
-    btn_simstart = tk.Button(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:start_analysis(True), font=("Arial", 10))
+    btn_simstart = tk.Button(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=("Arial", 10))
     btn_simstart.configure(bg=color_map["MC"],fg=color_map["TT"],relief='ridge')
     btn_simstart.pack(side=tk.LEFT, padx=5, pady=5)
 
@@ -385,8 +392,6 @@ if __name__ == "__main__":
     # 创建 PanedWindow
     paned_windowh = ttk.PanedWindow(litem, orient=tk.HORIZONTAL)
     paned_windowh.pack(fill="both", expand=True)
-    paned_windowv = ttk.PanedWindow(litem, orient=tk.VERTICAL)
-    paned_windowv.pack(fill="both", expand=True)
 
     # 调整样式
     style = ttk.Style()
@@ -570,23 +575,28 @@ if __name__ == "__main__":
     count_table.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=10)
 
     #统计容器
-
     frame_data = tk.Frame(frame_chart, bg=color_map["PC"])
     hide(frame_data, DoStat, lambda: frame_data.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True))
 
+    frame_3d = tk.Frame(frame_data, bg=color_map["PC"])
+    frame_3d.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
     frame_pie1 = tk.Frame(frame_data, bg=color_map["PC"])
-    frame_pie1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
+    frame_pie1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2.5, pady=5)
     frame_pie2 = tk.Frame(frame_data, bg=color_map["PC"])
-    frame_pie2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
+    frame_pie2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2.5, pady=5)
     frame_stati = tk.Frame(frame_data, bg=color_map["PC"])
-    frame_stati.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=5)
+    frame_stati.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    fig1 = Figure(figsize=(4, 3), dpi=100)
+    gl_view = OpenGLView(frame_3d, [((0, 0, 0), 'minecraft:dirt')], False, width=100, height=100, bg=color_map["PC"])
+    gl_view.pack(fill=tk.BOTH, expand=True)
+    gl_view.after(1000, gl_view.redraw)
+
+    fig1 = Figure(figsize=(4, 3), dpi=60)
     ax1 = fig1.add_subplot(111)
     canvas1 = FigureCanvasTkAgg(fig1, master=frame_pie1)
     canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-    fig2 = Figure(figsize=(4, 3), dpi=100)
+    fig2 = Figure(figsize=(4, 3), dpi=60)
     ax2 = fig2.add_subplot(111)
     canvas2 = FigureCanvasTkAgg(fig2, master=frame_pie2)
     canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
