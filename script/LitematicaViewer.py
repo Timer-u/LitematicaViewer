@@ -32,7 +32,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.6.2'
+APP_VERSION = '0.6.3'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -257,16 +257,19 @@ def start_analysis(simple_type):
     a_s2.config(text="{:.1f}".format(stat[0]))
     a_s3.config(text=f"{num / (size_x * size_y * size_z) * 100:.1f}%")
     redly = (sum(n for n, _ in Cla_Block["红石"])+sum(n for n, _ in Cla_Block["容器"])) / (num-sorted_block[0][1] if len(Block)>5 else num)
-    if redly>0.5:
-        me_type = "红石机器"
-    elif redly>=0.3:
-        me_type = "生电红石"
-    elif redly>=0.1:
-        me_type = "生电机器"
-    elif redly>=0.01:
-        me_type = "结构性机器"
-    elif redly<0.01:
-        me_type = top1[0][0]+"建筑"
+    if num > 10:
+        if redly>0.5:
+            me_type = "红石机器"
+        elif redly>=0.3:
+            me_type = "生电红石"
+        elif redly>=0.1:
+            me_type = "生电机器"
+        elif redly>=0.01:
+            me_type = "结构性机器"
+        elif redly<0.01:
+            me_type = top1[0][0]+"建筑"
+    else:
+        me_type = "方块太少"
     a_m1.config(text=f"{redly*100:.1f}%")
     a_m2.config(text=f"{me_type}")
     fluid = sum(n for n, _ in Cla_Block["液体"])
@@ -279,19 +282,27 @@ def start_analysis(simple_type):
         insert_table(block_state, count, simple_type)
 
     if Do3d.get():
-        gl_view.destroy()
-        if Li3d.get() and num>3000:
-            if num>6000:
-                check = easygui.boolbox("Block Number over 10000, keep rendering?")
-                print(check)
-                if not check: return
-                threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
-                return
-            gl_view = OpenGLView(frame_3d, Block_pos, False, width=100, height=100, bg=color_map["PC"])
+        if Pn3d.get():
+            gl_view.destroy()
+            if Li3d.get() and num>1000:
+                if num>5000:
+                    check = easygui.boolbox("Block Number over 5000, keep rendering?\n方块数量超过5千,是否继续渲染,可能会崩溃\n继续渲染将关闭旋转模式 Keep rendering will shut spinning mode",default_choice="是/Y 会变一次性",cancel_choice="取消/N 明智的选择")
+                    if not check: return
+                    threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
+                    return
+                gl_view = OpenGLView(frame_3d, Block_pos, False, width=100, height=100, bg=color_map["PC"])
+            else:
+                gl_view = OpenGLView(frame_3d, Block_pos, bool(Sp3d.get()), width=100, height=100, bg=color_map["PC"])
+            gl_view.pack(fill=tk.BOTH, expand=True)
+            gl_view.after(1000, gl_view.redraw)
         else:
-            gl_view = OpenGLView(frame_3d, Block_pos, bool(Sp3d.get()), width=100, height=100, bg=color_map["PC"])
-        gl_view.pack(fill=tk.BOTH, expand=True)
-        gl_view.after(1000, gl_view.redraw)
+            if Li3d.get() and num>1000:
+                if num>5000:
+                    check = easygui.boolbox("Block Number over 5000, keep rendering?\n方块数量超过5千,是否继续渲染,可能会崩溃\n继续渲染将关闭旋转模式 Keep rendering will shut spinning mode",default_choice="是/Y 会变一次性",cancel_choice="取消/N 明智的选择")
+                    if not check: return
+                threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
+            else:
+                threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
     litem.update_idletasks()
 
 if __name__ == "__main__":
@@ -303,18 +314,19 @@ if __name__ == "__main__":
     litem.configure(bg=color_map["MC"])
 
 
-    LogVar = ["DoEntity", "DoLifr", "DoStat", "DoAnal", "Do3d", "Li3d", "Sp3d"]
+    LogVar = ["DoEntity", "DoLifr", "DoStat", "DoAnal", "Do3d", "Pn3d", "Li3d", "Sp3d"]
     menu = tk.Menu(litem)
     DoEntity = tk.IntVar()
     DoLifr = tk.IntVar()
     DoStat = tk.IntVar()
     DoAnal = tk.IntVar()
     Do3d = tk.IntVar()
+    Pn3d = tk.IntVar()
     Li3d = tk.IntVar()
     Sp3d = tk.IntVar()
     if not os.path.exists(grs("log.txt")):
         with open(grs("log.txt"), "w") as file:
-            file.write("1111111")  # d1:Entity, d2-4:Frame, d5-7:3D
+            file.write("11111111")  # d1:Entity, d2-4:Frame, d5-8:3D
             for logvar in LogVar:
                 globals()[logvar] = tk.IntVar(value=1)
     else:
@@ -352,7 +364,8 @@ if __name__ == "__main__":
     menu_AnaSet.add_checkbutton(label="ShowAnalysisPannel是否显示分析面板", variable=DoAnal,command=lambda: hide(frame_middle,DoAnal), font=("Arial", 10))
     menu_AnaSet.add_separator()
     menu_AnaSet.add_checkbutton(label="Allow3DRander是否3D渲染", variable=Do3d, font=("Arial", 10))
-    menu_AnaSet.add_checkbutton(label="3DRanderLimit3D渲染限制|>3000", variable=Li3d, font=("Arial", 10))
+    menu_AnaSet.add_checkbutton(label="Rander3DEmbeddedDisplay3D面板集中显示", variable=Pn3d, font=("Arial", 10))
+    menu_AnaSet.add_checkbutton(label="3DRanderLimit3D渲染限制|num>1000", variable=Li3d, font=("Arial", 10))
     menu_AnaSet.add_checkbutton(label="Rotate3DRander3D渲染是否旋转", variable=Sp3d, font=("Arial", 10))
     menu_Func = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="Function功能",menu=menu_Func, font=("Arial", 20))
@@ -604,29 +617,29 @@ if __name__ == "__main__":
     l_st = tk.Label(frame_stati, text="数据统计", font=("Arial", 16, "bold"), bg=color_map["MC"], fg=color_map["TT"])
     l_st.grid(row=0, column=0, padx=2, pady=5, columnspan=6)
     l_s1 = tk.Label(frame_stati, text="中位数", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_s1.grid(row=1, column=0, padx=2, pady=5)
+    l_s1.grid(row=2, column=0, padx=2, pady=5)
     l_s2 = tk.Label(frame_stati, text="四分位距", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_s2.grid(row=1, column=2, padx=2, pady=5)
+    l_s2.grid(row=2, column=2, padx=2, pady=5)
     l_s3 = tk.Label(frame_stati, text="密度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_s3.grid(row=2, column=0, padx=2, pady=5)
+    l_s3.grid(row=3, column=0, padx=2, pady=5)
     l_m1 = tk.Label(frame_stati, text="红石偏度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_m1.grid(row=2, column=2, padx=2, pady=5)
+    l_m1.grid(row=1, column=0, padx=2, pady=5)
     l_m2 = tk.Label(frame_stati, text="材质", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_m2.grid(row=3, column=0, padx=2, pady=5)
+    l_m2.grid(row=1, column=2, padx=2, pady=5)
     l_m3 = tk.Label(frame_stati, text="液体偏度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
     l_m3.grid(row=3, column=2, padx=2, pady=5)
 
 
     a_s1 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_s1.grid(row=1, column=1, padx=5, pady=5)
+    a_s1.grid(row=2, column=1, padx=5, pady=5)
     a_s2 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_s2.grid(row=1, column=3, padx=5, pady=5)
+    a_s2.grid(row=2, column=3, padx=5, pady=5)
     a_s3 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_s3.grid(row=2, column=1, padx=5, pady=5)
+    a_s3.grid(row=3, column=1, padx=5, pady=5)
     a_m1 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_m1.grid(row=2, column=3, padx=5, pady=5)
+    a_m1.grid(row=1, column=1, padx=5, pady=5)
     a_m2 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_m2.grid(row=3, column=1, padx=5, pady=5)
+    a_m2.grid(row=1, column=3, padx=5, pady=5)
     a_m3 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
     a_m3.grid(row=3, column=3, padx=5, pady=5)
 

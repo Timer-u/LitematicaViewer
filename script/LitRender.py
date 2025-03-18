@@ -76,10 +76,11 @@ def draw_cube(position, color, face:tuple, mode:int):
 def CCrgb(image_path):
     with Image.open(image_path) as img:
         img = img.convert("RGB")
-        img_array = np.array(img)[1::5,1::5]
+        img_array = np.array(img)[2:-2:2,2:-2:4]
         pixels = img_array.reshape(-1, 3)
         color_counts = Counter(map(tuple, pixels))
-        color_counts[(230,230,230)]=0
+        color_counts[(0, 0, 0)]=0
+        color_counts[(255, 255, 255)] = 0
         most_common_color = color_counts.most_common(1)[0][0]
         normalized_color = tuple(color / 255.0 for color in most_common_color)
         return normalized_color
@@ -92,7 +93,7 @@ def render_world(blocks, rotation_angle):
     """
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
-    gluLookAt(3, 3, 5, 0.5, 0.5, 0.5, 0, 1, 0) # 设置相机位置和方向
+    gluLookAt(3, 3, 3, 0, 0, 0, 0, 1, 0) # 设置相机位置和方向 | ? 偏差 角度
     glRotatef(-rotation_angle, 0, 1, 0) # 逆时针旋转
     for x,_ in enumerate(blocks):
         for y,_ in enumerate(blocks[x]):
@@ -101,25 +102,25 @@ def render_world(blocks, rotation_angle):
                     continue
                 elif not x or not y or not z or x==xl or y==yl or z==zl:
                     fu: bool = False
-                    fd: bool = False
                     pass
                 else:
                     fu = isinstance(blocks[x][y + 1][z], str)
-                    fd = isinstance(blocks[x][y - 1][z], str)
-                    if isinstance(blocks[x + 1][y][z], str) and isinstance(blocks[x - 1][y][z], str) and fu and fd and isinstance(blocks[x][y][z + 1], str) and isinstance(blocks[x][y][z - 1], str):
+                    if isinstance(blocks[x + 1][y][z], str) and isinstance(blocks[x - 1][y][z], str) and fu and isinstance(blocks[x][y][z + 1], str) and isinstance(blocks[x][y][z - 1], str):
                         blocks[x][y][z] = None
                         continue
 
                 mode = 1 if "slab" in str(blocks[x][y][z]) else 2 if "carpet" in str(blocks[x][y][z]) else 3 if "pane" in str(blocks[x][y][z]) else 0
 
                 try:
-                    color = CCrgb(f"../block/{blocks[x][y][z].split(":")[1]}.png")
-                except AttributeError:
-                    continue
+                    color = CCrgb(grs(os.path.join('block', f"{blocks[x][y][z].split(":")[1]}.png")))
+                    #print(color, blocks[x][y][z])
+                    if color == (0.0,0.0,0.0):
+                        color = CCrgb(grs(os.path.join('item', f"{blocks[x][y][z].split(":")[1]}.png")))
+                        mode = 2
                 except FileNotFoundError as e:
                     color = fcid(blocks[x][y][z])
                     #print(f"error:{e}")
-                s = (True,True,not fu,not fd,True,True)
+                s = (True,True,not fu,False,True,True)
                 draw_cube((x,y,z), color,s,mode)
 
 def fcid(input_id) -> tuple:
@@ -160,7 +161,7 @@ class OpenGLView(OpenGLFrame):
         yl = max([y for (_, y, _), _ in blocks])
         zl = max([z for (_, _, z), _ in blocks])
         print((xl,yl,zl))
-        self.zoom = max(xl,yl,zl,10)+5
+        self.zoom = max(xl,yl,zl)+5
         self.pos_blocks = [[[None] * (zl + 1) for _ in range(yl + 1)] for _ in range(xl + 1)]
         for position, block_id in blocks:
             x, y, z = position
@@ -183,7 +184,7 @@ class OpenGLView(OpenGLFrame):
         self.tkMakeCurrent()
         self.paintgl()
         self.tkSwapBuffers()
-        self.after(10000, self.redraw)  # 控制渲染频率
+        self.after(1000, self.redraw)  # 控制渲染频率
 
     def paintgl(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -204,19 +205,20 @@ class OpenGLView(OpenGLFrame):
 
 
 def main_render_loop(blocks, rotate):
-    root = tk.Tk()
-    root.title("OpenGL Render")
+    rootr = tk.Tk()
+    rootr.title("OpenGL Render")
+    rootr.iconbitmap(grs("icon.ico"))
 
     # 创建OpenGL视图
-    gl_view = OpenGLView(root, blocks, rotate, width=300, height=300)
+    gl_view = OpenGLView(rootr, blocks, rotate, width=300, height=300)
     gl_view.pack(fill=tk.BOTH, expand=True)
 
     # 启动渲染循环
-    gl_view.after(10000, gl_view.redraw)
+    gl_view.after(1000, gl_view.redraw)
 
     # 处理窗口关闭
-    root.protocol("WM_DELETE_WINDOW", root.quit)
-    root.mainloop()
+    rootr.protocol("WM_DELETE_WINDOW", rootr.quit)
+    rootr.mainloop()
 
 
 if __name__ == "__main__":
