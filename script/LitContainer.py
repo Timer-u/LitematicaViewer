@@ -111,7 +111,7 @@ def LitContainer() -> None:
 rootc = tk.Tk()
 rootc.title("Containers")
 rootc.iconbitmap(grs("icon.ico"))
-rootc.geometry("500x400")
+rootc.geometry("500x800")
 rootc.configure(bg=color_map["MC"])
 
 Clable = tk.Label(rootc,text="容器探测", font=("Arial", 14, "bold"), bg=color_map["MC"], fg=color_map["TT"])

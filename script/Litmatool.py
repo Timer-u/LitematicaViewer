@@ -26,13 +26,19 @@ def convert_units(number):
 
 def cn_translate(id, key: bool = True, types = "Blocks") -> object:
     '''
-
+    CN translate
     :param id: Object ID translate
-    :param key: Justify is translate from value to key
-    :param type: transfer dist type
+    :param key: False: value(CN) to key(EN) | True: key(EN) to value(CN)
+    :param types: transfer dist type
     :return: Object Chinese name
     '''
-    return json_data[types].get(id, id) if key else json_data[types][id]
+    if key:
+        return json_data[types].get(id, id)
+    else:
+        for k, v in json_data[types].items():
+            if v == id:
+                return k
+        return id
 
 def manual_install_pk():
     try:

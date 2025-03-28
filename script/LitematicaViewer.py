@@ -5,7 +5,7 @@ from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
 
 import LitRender, easygui
-from script.LitRender import main_render_loop, OpenGLView
+from script.LitRender import OpenGLView, main_render_loop
 from script.Litmatool import *
 from script.Structure import *
 from script.liteVersonFix import *
@@ -54,14 +54,24 @@ def on_exit():
             fw += str(globals()[logvar].get())
         print(f"Log Rewrite:{fw}")
         file.write(fw)
-
 atexit.register(on_exit)
 
 def ConAly():
-    from script.LitContainer import LitConImport
-    print(file_path)
-    LitConImport()
+    threading.Thread(target=lambda: subprocess.run(["python", grs(os.path.join('script', 'LitContainer.py'))]), daemon=True).start()
 
+def CS_trans_dict(inp:str) -> dict:
+    d1 = inp.strip("\n").split(",")
+
+    d2 = {}
+    print(d1, d2)
+    for i,s in enumerate(d1):
+        init, final =tuple(s.split("-"))
+        print(init,final)
+        init = "minecraft:"+str(cn_translate(init,False))
+        final = "minecraft:"+str(cn_translate(final,False))
+        d2[init] = final
+
+    return d2
 
 def import_file():
     global file_path, file_name
@@ -112,6 +122,7 @@ def insert_table(block_state, count, simple_type):
     img = load_image(block_name)
     count_table.insert('', 'end', image=img, values=(block_id_display, str(count), convert_units(count), properties_str))
     litem.update_idletasks()
+
 def output_data(classification : bool = False):
     global Block
     output_file_path = tk.filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"),
@@ -145,7 +156,6 @@ def output_data(classification : bool = False):
                     else:
                         f.write(f"{num}[{convert_units(num)}] | {cn_translate(id)}[{id}]\n")
     os.startfile(output_file_path)
-
 
 def Draw_Chart():
     ax1.clear()
@@ -348,11 +358,10 @@ if __name__ == "__main__":
     menu_analysis.add_command(label="ClassifiedOutput分类导出", command=lambda:output_data(True), font=("Arial", 10))
     menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=("Arial", 10))
     #menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=False).start(), font=("Arial", 10))
-    menu_analysis.add_command(label="SpawnRegularShape生成图形投影", command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
+    menu_analysis.add_command(label="SpawnRegularShape生成图形投影", command=lambda : create_structure(entry_spawn.get(),f"minecraft:{cn_translate(entry_id.get(),False)}",
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
-                                                            (entry_length.get(),entry_width.get(),entry_height.get()),
-                                                            bool(chollow), int(entry_thickness.get() if entry_thickness.get() else 0),
-                                                            [cu.get(),cd.get(),cl.get(),cr.get(),cf.get(),cb.get()]), font=("Arial", 10))
+                                                            (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
+                                                            ), font=("Arial", 10))
     menu_analysis.add_command(label="FillSpecificBlock替换特定方块", command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), entry_spawn2.get() if entry_spawn2.get() else file_name.split(".")[0]+"_Modified"), font=("Arial", 10))
     menu.add_cascade(label="DataAnalysis数据分析", menu=menu_analysis, font=("Arial", 20))
     menu_AnaSet = tk.Menu(menu, tearoff=0)
@@ -446,7 +455,7 @@ if __name__ == "__main__":
     entry_height = tk.Entry(frame_spawn_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=("Arial", 10))
     entry_height.grid(row=3, column=1, padx=2, pady=5)
     # -- Hollow 单选框和 Thickness 输入框
-    chollow = tk.IntVar()
+    '''chollow = tk.IntVar()
     lable_thickness = tk.Label(frame_spawn_new, text="厚度\nThickness", font=("Arial", 12), bg=color_map["MC"], fg=color_map["TT"])
     lable_thickness.grid(row=4, column=0, padx=5, pady=5)
     entry_thickness = tk.Entry(frame_spawn_new, width=13, bg=color_map["BG"], fg=color_map["PC"], font=("Arial", 10))
@@ -471,7 +480,7 @@ if __name__ == "__main__":
     check_front = tk.Checkbutton(frame_spawn_new, text="前F", bg=color_map["MC"], fg=color_map["TT"], font=("Arial", 10), variable=cf)
     check_front.grid(row=6, column=2, padx=2, pady=2)
     check_back = tk.Checkbutton(frame_spawn_new, text="后B", bg=color_map["MC"], fg=color_map["TT"], font=("Arial", 10), variable=cb)
-    check_back.grid(row=6, column=3, padx=2, pady=2)
+    check_back.grid(row=6, column=3, padx=2, pady=2)'''
 
     label_spawn = tk.Label(frame_spawn_new, text="文件名File", font=("Arial", 12), bg=color_map["MC"], fg=color_map["TT"])
     label_spawn.grid(row=7, column=0, padx=5, pady=5)
@@ -479,16 +488,15 @@ if __name__ == "__main__":
     entry_spawn.grid(row=7, column=1, columnspan=3,padx=2, pady=2)
 
     btn_spawn = tk.Button(frame_spawn_new, text="Spawn生成", font=("Arial", 10, "bold"),
-                          command=lambda : create_structure(entry_spawn.get(),entry_id.get(),
+                          command=lambda : create_structure(entry_spawn.get(),f"minecraft:{cn_translate(entry_id.get(),False)}",
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
-                                                            (entry_length.get(),entry_width.get(),entry_height.get()),
-                                                            bool(chollow), int(entry_thickness.get() if entry_thickness.get() else 0),
-                                                            [cu.get(),cd.get(),cl.get(),cr.get(),cf.get(),cb.get()]))
+                                                            (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
+                                                            )) # bool(chollow), int(entry_thickness.get() if entry_thickness.get() else 0),[cu.get(),cd.get(),cl.get(),cr.get(),cf.get(),cb.get()]
     btn_spawn.configure(bg=color_map["BG"], fg=color_map["MC"], relief='ridge')
-    btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=2)
-    label_warn = tk.Label(frame_spawn_new, text="Hollow Not Usable", font=("Arial", 10), bg=color_map["TT"], fg=color_map["Red"])
-    label_warn.grid(row=8, column=2, padx=5, pady=5, columnspan=2)
-    label_tip = tk.Label(frame_spawn_new, text="所有ID输入需以\"minecraft:ID\"为输入形式", font=("Arial", 10, "bold"), bg=color_map["MC"], fg=color_map["Red"])
+    btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=4)
+    '''label_warn = tk.Label(frame_spawn_new, text="Hollow Not Usable", font=("Arial", 10), bg=color_map["TT"], fg=color_map["Red"])
+    label_warn.grid(row=8, column=2, padx=5, pady=5, columnspan=2)'''
+    label_tip = tk.Label(frame_spawn_new, text="ID输入可以为纯英文或中文名", font=("Arial", 10, "bold"), bg=color_map["MC"], fg=color_map["Red"])
     label_tip.grid(row=9, column=0, padx=5, pady=5, columnspan=4)
     # - 右容器下部：frame_spawn_change
     frame_spawn_change = tk.Frame(frame_spawn, bg=color_map["MC"])
@@ -525,12 +533,12 @@ if __name__ == "__main__":
     entry_spawn2 = tk.Entry(frame_spawn_change, width=20, bg=color_map["BG"], fg=color_map["PC"], font=("Arial", 10))
     entry_spawn2.grid(row=4, column=1, columnspan=3,padx=2, pady=2)
 
-    btn_spawn2 = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"), command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), entry_spawn2.get() if entry_spawn2.get() else file_name.split(".")[0]+"_Modified"))
+    btn_spawn2 = tk.Button(frame_spawn_change, text="Spawn生成", font=("Arial", 10, "bold"), command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), entry_spawn2.get() if entry_spawn2.get() else file_name.split(".")[0]+"_Modified"))
     btn_spawn2.configure(bg=color_map["BG"], fg=color_map["MC"], relief='ridge')
-    btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=2)
-    label_warn2 = tk.Label(frame_spawn_change, text="Nothing", font=("Arial", 10), bg=color_map["TT"], fg=color_map["Red"])
-    label_warn2.grid(row=5, column=2, padx=5, pady=5, columnspan=2)
-    label_tip2 = tk.Label(frame_spawn_change, text="替换表以{\"minecraft:旧方块\":\n\"minecraft:新方块\",...后续同上}为输入形式\n双引号是必须的", font=("Arial", 10, "bold"), bg=color_map["MC"], fg=color_map["Red"])
+    btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=4)
+    '''label_warn2 = tk.Label(frame_spawn_change, text="Nothing", font=("Arial", 10), bg=color_map["TT"], fg=color_map["Red"])
+    label_warn2.grid(row=5, column=2, padx=5, pady=5, columnspan=2)'''
+    label_tip2 = tk.Label(frame_spawn_change, text="替换表= 旧方块-新方块,...", font=("Arial", 10, "bold"), bg=color_map["MC"], fg=color_map["Red"])
     label_tip2.grid(row=6, column=0, padx=5, pady=5, columnspan=4)
 
 
@@ -623,12 +631,11 @@ if __name__ == "__main__":
     l_s3 = tk.Label(frame_stati, text="密度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
     l_s3.grid(row=3, column=0, padx=2, pady=5)
     l_m1 = tk.Label(frame_stati, text="红石偏度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_m1.grid(row=1, column=0, padx=2, pady=5)
+    l_m1.grid(row=1, column=2, padx=2, pady=5)
     l_m2 = tk.Label(frame_stati, text="材质", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
-    l_m2.grid(row=1, column=2, padx=2, pady=5)
+    l_m2.grid(row=1, column=0, padx=2, pady=5)
     l_m3 = tk.Label(frame_stati, text="液体偏度", font=("Arial", 12, "bold"), bg=color_map["MC"], fg=color_map["TT"])
     l_m3.grid(row=3, column=2, padx=2, pady=5)
-
 
     a_s1 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
     a_s1.grid(row=2, column=1, padx=5, pady=5)
@@ -637,9 +644,9 @@ if __name__ == "__main__":
     a_s3 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
     a_s3.grid(row=3, column=1, padx=5, pady=5)
     a_m1 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_m1.grid(row=1, column=1, padx=5, pady=5)
+    a_m1.grid(row=1, column=3, padx=5, pady=5)
     a_m2 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
-    a_m2.grid(row=1, column=3, padx=5, pady=5)
+    a_m2.grid(row=1, column=1, padx=5, pady=5)
     a_m3 = tk.Label(frame_stati, text="0", font=("Arial", 12), bg=color_map["PC"], fg=color_map["BG"])
     a_m3.grid(row=3, column=3, padx=5, pady=5)
 

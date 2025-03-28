@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # 创建主窗口
     root = tk.Tk()
     root.title("Litematica 文件版本修复工具")
-    root.iconbitmap(grs("icon.ico"))
+    root.iconbitmap(grs("tm_icon.ico"))
     root.geometry("300x200")
     tk.Label(text="投影输出版本")
 

@@ -5,7 +5,7 @@ from OpenGL.GLU import *
 from PIL import Image
 import numpy as np
 from collections import Counter
-from pyopengltk import OpenGLFrame  # 需要安装pyopengltk
+from pyopengltk import OpenGLFrame
 from Litmatool import grs
 
 
@@ -184,7 +184,7 @@ class OpenGLView(OpenGLFrame):
         self.tkMakeCurrent()
         self.paintgl()
         self.tkSwapBuffers()
-        self.after(1000, self.redraw)  # 控制渲染频率
+        self.after(2000, self.redraw)  # 控制渲染频率
 
     def paintgl(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -208,16 +208,9 @@ def main_render_loop(blocks, rotate):
     rootr = tk.Tk()
     rootr.title("OpenGL Render")
     rootr.iconbitmap(grs("icon.ico"))
-
-    # 创建OpenGL视图
     gl_view = OpenGLView(rootr, blocks, rotate, width=300, height=300)
     gl_view.pack(fill=tk.BOTH, expand=True)
-
-    # 启动渲染循环
-    gl_view.after(1000, gl_view.redraw)
-
-    # 处理窗口关闭
-    rootr.protocol("WM_DELETE_WINDOW", rootr.quit)
+    gl_view.after(2000, gl_view.redraw)
     rootr.mainloop()
 
 

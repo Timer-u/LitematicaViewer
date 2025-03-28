@@ -52,7 +52,8 @@ def create_structure(file_name: str, block_id: str, start_coords: tuple, dimensi
 
 # {"minecraft:iron_block":"minecraft:dirt"}
 def change_Schematic(schematic, change_list, limit: tuple, file_name):
-    replace_dict = json.loads(change_list)
+    print(change_list)
+    replace_dict = change_list
     #print("Replace Dictionary:", replace_dict, limit)
 
     (xmin, xmax), (ymin, ymax), (zmin, zmax) = limit
