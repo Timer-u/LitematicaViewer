@@ -1,16 +1,13 @@
 LitematicaViewer投影查看器 v0.6.4
-===============================
+=================================
 
 ### Minecraft tool - A tool make easy to check litematica files 让我的世界投影查看更加的轻量便捷
 
-[![ver](https://img.shields.io/badge/Version-beta_0.5.6a-red)]()
-[![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/v/release/Albertchen857/LitematicaViewer)]()
-[![三连](https://img.shields.io/badge/-一键三连-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1H9ZVYtEta/?share_source=copy_web&vd_source=cb300adad11a7c409e2ff69281fb5e49)
-[![转发](https://img.shields.io/badge/-转发-00A1D6?logo=bilibili&logoColor=white)](https://space.bilibili.com/3494373232741268)
-
 GITHUB链接: https://github.com/albertchen857/LitematicaViewer
+求求点点星吧 I want Stars~
 
 A light Viewer of Litematica files
+
 * `imput file` Input your file first and choose mode for check your file.
 * `output` Output Litematica analysis data into a file or chart. (Text File & Excel File)
 * `Classification Output` Output Litematica analysis data with classification into a file or chart. (Text File & Excel File)
@@ -18,10 +15,11 @@ A light Viewer of Litematica files
 * `Container Analysis` analysis containers with items inside, show items and basic infos
 * `Spawn Regular Shape` A Light Tool to generate a regular shape
 * `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own setting limitations
-* `3D Rendering` 3d Rendering target Litematic file. 
+* `3D Rendering` 3d Rendering target Litematic file.
 * `Transfer Litematic File Version` Transfer 1.21 Litematic file into old versions (1.16 ~ 1.12)
 
 一个轻量便捷的投影查看器
+
 * `导入` 导入投影文件
 * `导出` 导出投影数据 (文本&表格)
 * `分类导出` 导出分类投影数据 (文本&表格)
@@ -32,7 +30,28 @@ A light Viewer of Litematica files
 * `3D渲染` 3D渲染目标投影 (可能引起卡顿)
 * `跨版本转换投影` 将默认最新版本投影转换到1.16/1.13版本的投影文件
 
-# 后续更新内容Updates
-
-* [ ]  日志&历史文件 Logs & Historys
-
+# 分支图
+```
+投影查看器LitematicaViewer
+|-分析analysis
+| |-简洁分析simpleAnalysis
+| |-容器分析ContainerAnalysis
+| | |-普通分析Norm
+| | |-分类分析(开发ing)Cate
+| |-全面分析 (关闭)FullAnalysis
+|-导出Output
+| |-普通导出 (txt/csv)Norm
+| |-分类导出 (txt/csv)Cate
+|-统计Stat
+| |-常规统计 (红石/中位/其他)Basic
+| |-成分统计 (方块拼图)PieGraph
+| |-3D渲染 (旋转/静止)3DRender
+|-功能func
+| |-生成图形投影Polygon
+| | |-立方体生成Cube
+| | |-特殊形状生成(开发)Unusual
+| |-替换特定方块ChangeIndentifyBlock
+| |-投影转换版本 (1.17/1.15/1.12)TransVersion
+|-界面UI
+  |-字体/颜色/布局自定义美化(开发) UIupdate
+```

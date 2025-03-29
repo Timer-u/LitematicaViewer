@@ -3,7 +3,7 @@ import tkinter as tk
 import json, os
 from tkinter import filedialog, ttk
 from Litmatool import cn_translate, id_tran_name, grs
-from LitematicaViewer import file_path
+#from LitematicaViewer import file_path
 
 data = json.load(open(grs(os.path.join('lang', 'data.json')), 'r', encoding='utf-8'))
 color_map = data["Color_map"]
@@ -17,7 +17,7 @@ def cn_id(id):
 
 def LitConImport():
     global path
-    path = filedialog.askopenfilename(filetypes=[("Litematic File", "*.litematic"), ("All File", "*.*")], title="选择 Litematic 文件", initialdir=file_path)
+    path = filedialog.askopenfilename(filetypes=[("Litematic File", "*.litematic"), ("All File", "*.*")], title="选择 Litematic 文件")
     if not path: return
     print("Selected file path:", path)
     LitContainer()
