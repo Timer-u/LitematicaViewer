@@ -1,9 +1,40 @@
 {
-  "Color_map": {
+  "Color_map": [
+    {
       "MC": "#3399ff",
-    "PC": "#0066cc",
-    "BG": "#f8f9fa",
-    "TT": "#343a40",
-    "Red": "#ff6374"
+      "PC": "#0066cc",
+      "BG": "#f8f9fa",
+      "TT": "#343a40",
+      "Red": "#ff6374"
+    },
+    {
+      "MC": "#3399ff",
+      "PC": "#0066cc",
+      "BG": "#f8f9fa",
+      "TT": "#343a40",
+      "Red": "#ff6374"
+    },
+    {
+      "MC": "#3399ff",
+      "PC": "#0066cc",
+      "BG": "#f8f9fa",
+      "TT": "#343a40",
+      "Red": "#ff6374"
+    }
+  ],
+  "Font": [
+    "Arial",
+    "Noto_Sans_SC",
+    "Minecraft",
+    "SimHei",
+    "SmileySans"
+  ],
+  "Save":{
+    "Basic": "11111111",
+    "ui": {
+      "Font": "Arial",
+      "FontSize": 10,
+      "ColorMap": 0
+    }
   }
 }

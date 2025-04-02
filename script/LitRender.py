@@ -118,12 +118,12 @@ def render_world(blocks, rotation_angle):
                         color = CCrgb(grs(os.path.join('item', f"{blocks[x][y][z].split(":")[1]}.png")))
                         mode = 2
                 except FileNotFoundError as e:
-                    color = fcid(blocks[x][y][z])
+                    color = (100,100,100)
                     #print(f"error:{e}")
                 s = (True,True,not fu,False,True,True)
                 draw_cube((x,y,z), color,s,mode)
 
-def fcid(input_id) -> tuple:
+'''def fcid(input_id) -> tuple:
     """
     通过输入的ID查找对应的颜色键
     :param input_id: 输入的ID（如 'minecraft:blackstone'）
@@ -135,7 +135,7 @@ def fcid(input_id) -> tuple:
         for item in item_name.split("_"):
             if item in items:  # 检查物品名称是否包含在某个颜色对应的物品中
                 return (int(color[0:2], 16)/255.0,int(color[2:4], 16)/255.0,int(color[4:6], 16)/255.0)
-    return (0.2,0.2,0.2)
+    return (0.2,0.2,0.2)'''
 
 def init_opengl(display):
     glEnable(GL_DEPTH_TEST)  # 启用深度测试
