@@ -1,0 +1,9 @@
+.idea/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+sdist/
+*.spec
