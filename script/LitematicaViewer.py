@@ -1,8 +1,14 @@
 import threading
+import sys
+import os
 from tkinter import filedialog
 from tkinter import ttk
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
+
+
+sys.path.extend(os.path.dirname(__file__)+"..")
+
 
 import LitRender, easygui
 from script.LitRender import OpenGLView, main_render_loop
@@ -12,10 +18,9 @@ from script.liteVersonFix import *
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import importlib, webbrowser, os, codecs, atexit
+import importlib, webbrowser, codecs, atexit
 
 
-import sys
 import traceback
 
 data = json.load(open(grs(os.path.join('lang', 'data.json')), 'r', encoding='utf-8'))
