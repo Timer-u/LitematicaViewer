@@ -1,8 +1,9 @@
 litemapy==0.10.0b0
 pillow==11.1.0
-scipy==1.15.1
+scipy
 numpy==1.26.4
-matplotlib==3.10.0
+matplotlib
 amulet-nbt==2.1.3
 pyopengl==3.1.9
 pyopengltk==0.0.4
+easygui
