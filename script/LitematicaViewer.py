@@ -71,7 +71,10 @@ def on_exit():
 atexit.register(on_exit)
 
 def ConAly():
-    from script.LitContainer import LitConImport
+    try:
+        from script.LitContainer import LitConImport
+    except:
+        from LitContainer import LitConImport
     threading.Thread(target=LitConImport, daemon=True).start()
 
 def CS_trans_dict(inp:str) -> dict:
