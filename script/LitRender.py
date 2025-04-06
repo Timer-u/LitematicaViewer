@@ -112,10 +112,10 @@ def render_world(blocks, rotation_angle):
                 mode = 1 if "slab" in str(blocks[x][y][z]) else 2 if "carpet" in str(blocks[x][y][z]) else 3 if "pane" in str(blocks[x][y][z]) else 0
 
                 try:
-                    color = CCrgb(grs(os.path.join('block', f"{blocks[x][y][z].split(":")[1]}.png")))
+                    color = CCrgb(grs(os.path.join('block', f"{blocks[x][y][z].split(':')[1]}.png")))
                     #print(color, blocks[x][y][z])
                     if color == (0.0,0.0,0.0):
-                        color = CCrgb(grs(os.path.join('item', f"{blocks[x][y][z].split(":")[1]}.png")))
+                        color = CCrgb(grs(os.path.join('item', f"{blocks[x][y][z].split(':')[1]}.png")))
                         mode = 2
                 except FileNotFoundError as e:
                     color = (100,100,100)
