@@ -6,7 +6,7 @@ from Litmatool import cn_translate, id_tran_name, grs
 #from LitematicaViewer import file_path
 
 data = json.load(open(grs(os.path.join('lang', 'data.json')), 'r', encoding='utf-8'))
-color_map = data["Color_map"]
+color_map = data["Color_map"][data["Save"]["ui"]["ColorMap"]]
 
 path : str = ""
 def cn_id(id):

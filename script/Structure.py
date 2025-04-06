@@ -13,7 +13,7 @@ def get_schematic_bounds(schematic):
             z_coords.append(z)
     return max(x_coords), max(y_coords), max(z_coords), min(x_coords), min(y_coords), min(z_coords)
 
-def create_structure(file_name: str, block_id: str, start_coords: tuple, dimensions: tuple, hollow: bool, wall_thickness: int, faces: list[int]) -> None:
+def create_structure(block_id: str, start_coords: tuple, dimensions: tuple, hollow: bool, wall_thickness: int, faces: list[int]) -> None:
     if start_coords == ('', '', ''):
         cx, cy, cz = (0,0,0)
     else:
@@ -48,14 +48,11 @@ def create_structure(file_name: str, block_id: str, start_coords: tuple, dimensi
                     region[x + cx, y + cy, z + cz] = block
 
                 region[x + cx, y + cy, z + cz] = block
-    save_Schematic(schematic,file_name)
+    save_Schematic(schematic,"Cube")
 
 # {"minecraft:iron_block":"minecraft:dirt"}
 def change_Schematic(schematic, change_list, limit: tuple, file_name):
-    print(change_list)
     replace_dict = change_list
-    #print("Replace Dictionary:", replace_dict, limit)
-
     (xmin, xmax), (ymin, ymax), (zmin, zmax) = limit
     maxx, maxy, maxz, minx, miny, minz = get_schematic_bounds(schematic)
     print(f"BoundsRegion: xmin={minx}, xmax={maxx}, ymin={miny}, ymax={maxy}, zmin={minz}, zmax={maxz}")
