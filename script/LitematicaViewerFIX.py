@@ -3,7 +3,7 @@ from tkinter import filedialog
 from tkinter import ttk
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
-
+from customtkinter import *
 import LitRender, easygui
 from script.LitRender import OpenGLView, main_render_loop
 from script.Litmatool import *
@@ -311,7 +311,6 @@ def start_analysis(simple_type):
             else:
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
     litem.update_idletasks()
-
 if __name__ == "__main__":
     # 创建主窗口
     litem = tk.Tk()
@@ -322,18 +321,10 @@ if __name__ == "__main__":
 
     # 调整样式
     style = ttk.Style()
-    style.theme_use("alt")
+    style.theme_use("default")
     style.configure("TFrame", background=color_map["BG"])
     style.configure("TPanedwindow", background=color_map["BG"])
     style.configure("TPanedwindow.Sash", background=color_map["MC"])
-    style.configure("Rounded.TButton",
-                    background=color_map["MC"],
-                    foreground=color_map["TT"],
-                    borderwidth=0,
-                    relief="flat",
-                    font=(DefaultFont, 12),
-                    padding=10,
-                    radius=5)  # 圆角半径
 
     LogVar = ["DoEntity", "DoLifr", "DoStat", "DoAnal", "Do3d", "Pn3d", "Li3d", "Sp3d"]
     menu = tk.Menu(litem)
@@ -407,28 +398,32 @@ if __name__ == "__main__":
     frame_top.configure(bg=color_map["PC"], bd=5)
     frame_top.pack(side=tk.TOP, fill=tk.X)
 
-    btn_import = ttk.Button(frame_top, text="Import导入", command=import_file, style="Rounded.TButton")
-    #btn_import.configure(bg=color_map["MC"],fg=color_map["TT"],relief='ridge')
+    btn_import = CTkButton(frame_top, text="Import导入", command=import_file, font=(DefaultFont, 10))
+    btn_import.configure(bg=color_map["MC"], fg=color_map["TT"], relief='ridge')
     btn_import.pack(side=tk.LEFT, padx=5, pady=5)
-    btn_simstart = ttk.Button(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), style="Rounded.TButton")
+    btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析",
+                             command=lambda: threading.Thread(target=start_analysis(True), daemon=True).start(),
+                             font=(DefaultFont, 10))
+    btn_simstart.configure(bg=color_map["MC"], fg=color_map["TT"], relief='ridge')
     btn_simstart.pack(side=tk.LEFT, padx=5, pady=5)
 
-    btn_github = ttk.Button(frame_top, text="GitHub", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), style="Rounded.TButton")
+    btn_github = CTkButton(frame_top, text="GitHub",
+                           command=lambda: webbrowser.open("https://github.com/albertchen857/LitematicaViewer"),
+                           font=(DefaultFont, 10))
+    btn_github.configure(bg="black", fg=color_map["BG"], relief='groove')
     btn_github.pack(side=tk.RIGHT, padx=5, pady=5)
-    btn_bilibili = ttk.Button(frame_top, text="Bilibili", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), style="Rounded.TButton")
+    btn_bilibili = CTkButton(frame_top, text="Bilibili",
+                             command=lambda: webbrowser.open("https://space.bilibili.com/3494373232741268"),
+                             font=(DefaultFont, 10))
+    btn_bilibili.configure(bg="#FF6699", fg=color_map["BG"], relief='groove')
     btn_bilibili.pack(side=tk.RIGHT, padx=5, pady=5)
-
-
-    # 创建 PanedWindow
-    paned_windowh = ttk.PanedWindow(litem, orient=tk.HORIZONTAL)
-    paned_windowh.pack(fill="both", expand=True)
 
 
 
 
     # lith容器
-    frame_spawn = tk.Frame(paned_windowh, bg=color_map["PC"])
-    paned_windowh.add(frame_spawn, weight=1)
+    #frame_spawn = tk.Frame(litem, bg=color_map["PC"])
+    frame_spawn = ttk.Frame(litem, style="Rounded.TFrame")
     hide(frame_spawn, DoLifr)
     # - 右容器上部：frame_spawn_new
     frame_spawn_new = tk.Frame(frame_spawn, bg=color_map["MC"])
@@ -485,7 +480,7 @@ if __name__ == "__main__":
     check_back = tk.Checkbutton(frame_spawn_new, text="后B", bg=color_map["MC"], fg=color_map["TT"], font=(DefaultFont, 10), variable=cb)
     check_back.grid(row=6, column=3, padx=2, pady=2)'''
 
-    btn_spawn = ttk.Button(frame_spawn_new, text="Spawn生成",
+    btn_spawn = CTkButton(frame_spawn_new, text="Spawn生成",
                           command=lambda : create_structure(f"minecraft:{cn_translate(entry_id.get(),False)}",
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
                                                             (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
@@ -525,7 +520,7 @@ if __name__ == "__main__":
     text_change = tk.Text(frame_spawn_change,width=20, height=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
     text_change.grid(row=3, column=1, columnspan=3, padx=5, pady=5)
 
-    btn_spawn2 = ttk.Button(frame_spawn_change, text="Spawn生成", command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
+    btn_spawn2 = CTkButton(frame_spawn_change, text="Spawn生成", command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
     btn_spawn2.configure(style="Rounded.TButton")
     btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=4)
     '''label_warn2 = tk.Label(frame_spawn_change, text="Nothing", font=(DefaultFont, 10), bg=color_map["TT"], fg=color_map["Red"])
@@ -535,8 +530,7 @@ if __name__ == "__main__":
 
 
     # 中容器
-    frame_middle = tk.Frame(paned_windowh, bg=color_map["MC"])
-    paned_windowh.add(frame_middle, weight=1)
+    frame_middle = tk.Frame(litem, bg=color_map["MC"])
     hide(frame_middle,DoAnal,lambda :frame_middle.pack(side=tk.LEFT, fill=tk.BOTH, expand=True))
     # - 中容器顶部
     frame_middle_top = tk.Frame(frame_middle, bg=color_map["MC"])
