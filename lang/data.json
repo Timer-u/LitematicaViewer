@@ -1,40 +1,41 @@
 {
-  "Color_map": [
-    {
-      "MC": "#3399ff",
-      "PC": "#0066cc",
-      "BG": "#f8f9fa",
-      "TT": "#343a40",
-      "Red": "#ff6374"
+    "Color_map": {
+        "BlueAr": {
+            "MC": "#3399ff",
+            "PC": "#0066cc",
+            "BG": "#f8f9fa",
+            "TT": "#343a40",
+            "PR": "#babcc2"
+        },
+        "Green": {
+            "MC": "#a1f1d8",
+            "PC": "#01b78f",
+            "BG": "#ffffff",
+            "TT": "#1D1D1D",
+            "PR": "#ff0000"
+        },
+        "Dark": {
+            "MC": "#3f3e43",
+            "PC": "#fbb556",
+            "BG": "#222126",
+            "TT": "#e0dde8",
+            "PR": "#1ac0a7"
+        }
     },
-    {
-      "MC": "#3399ff",
-      "PC": "#0066cc",
-      "BG": "#f8f9fa",
-      "TT": "#343a40",
-      "Red": "#ff6374"
-    },
-    {
-      "MC": "#3399ff",
-      "PC": "#0066cc",
-      "BG": "#f8f9fa",
-      "TT": "#343a40",
-      "Red": "#ff6374"
+    "Font": [
+        "Arial",
+        "Noto_Sans_SC",
+        "Minecraft",
+        "SimHei",
+        "SmileySans"
+    ],
+    "Save": {
+        "Basic": "11111111",
+        "ui": {
+            "Font": "SimHei",
+            "FontSize": 10,
+            "ColorMap": "BlueAr",
+            "cornerRadius": 10
+        }
     }
-  ],
-  "Font": [
-    "Arial",
-    "Noto_Sans_SC",
-    "Minecraft",
-    "SimHei",
-    "SmileySans"
-  ],
-  "Save":{
-    "Basic": "11111111",
-    "ui": {
-      "Font": "Arial",
-      "FontSize": 10,
-      "ColorMap": 0
-    }
-  }
 }

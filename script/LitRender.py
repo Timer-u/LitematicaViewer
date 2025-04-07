@@ -14,6 +14,8 @@ blocks = [((0,0,0), 'minecraft:dirt'), ((0,0,1), 'minecraft:grass_block'),( (0,1
 xl:int
 yl:int
 zl:int
+data = json.load(open(grs(os.path.join('lang', 'data.json')), 'r', encoding='utf-8'))
+color_map = data["Color_map"][data["Save"]["ui"]["ColorMap"]]
 def draw_cube(position, color, face:tuple, mode:int):
     """
     绘制一个立方体
@@ -139,7 +141,7 @@ def render_world(blocks, rotation_angle):
 
 def init_opengl(display):
     glEnable(GL_DEPTH_TEST)  # 启用深度测试
-    glClearColor(0.2, 0.6, 1, 1.0)  # 设置背景颜色
+    glClearColor(int(color_map["MC"][1:3], 16)/255.0, int(color_map["MC"][3:5], 16)/255.0, int(color_map["MC"][5:7], 16)/255.0, 1.0)  # 设置背景颜色
     glMatrixMode(GL_PROJECTION)
     gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)  # 设置透视投影
     glMatrixMode(GL_MODELVIEW)
@@ -169,7 +171,7 @@ class OpenGLView(OpenGLFrame):
 
     def initgl(self):
         glEnable(GL_DEPTH_TEST)
-        glClearColor(0.2, 0.6, 1, 1.0)
+        glClearColor(int(color_map["MC"][1:3], 16)/255.0, int(color_map["MC"][3:5], 16)/255.0, int(color_map["MC"][5:7], 16)/255.0, 1.0)
         self.set_projection()
 
     def set_projection(self):
