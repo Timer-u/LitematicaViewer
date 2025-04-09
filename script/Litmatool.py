@@ -24,7 +24,7 @@ def convert_units(number):
             number %= value
     return result if result else "0个"
 
-def cn_translate(id, key: bool = True, types = "Blocks") -> object:
+def cn_translate(id, key: bool = True, types = "Blocks") -> str:
     '''
     CN translate
     :param id: Object ID translate

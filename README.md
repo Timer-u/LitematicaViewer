@@ -2,6 +2,11 @@ LitematicaViewer投影查看器 v0.6.4
 =================================
 
 ### Minecraft tool - A tool make easy to check litematica files 让我的世界投影查看更加的轻量便捷
+[![ver](https://img.shields.io/badge/Version-beta_0.5.6a-red)]()
+[![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/v/release/Albertchen857/LitematicaViewer)]()
+[![三连](https://img.shields.io/badge/-一键三连-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1H9ZVYtEta/?share_source=copy_web&vd_source=cb300adad11a7c409e2ff69281fb5e49)
+[![转发](https://img.shields.io/badge/-转发-00A1D6?logo=bilibili&logoColor=white)](https://space.bilibili.com/3494373232741268)
+[![YoutubeIntro](https://img.shields.io/badge/-Youtube-00A1D6?logo=youtube&logoColor=red)](https://www.youtube.com/watch?v=0nofWrfKJeg)
 
 GITHUB链接: https://github.com/albertchen857/LitematicaViewer
 求求点点星吧 I want Stars~

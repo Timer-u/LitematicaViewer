@@ -2740,29 +2740,5 @@
     "海晶类":["prismarine","sea","coral"],
     "粘土类":["clay","brick"],
     "液体": ["water","lava","bubble"]
-  },
-  "Color": {
-    "141417": ["black","blackstone"],
-    "515051": ["gray","deepslate","basalt","tuff","dead"],
-    "727272": ["light_gray","stone"],
-    "e9e4e0": ["white","iron","pale"],
-    "d31d06": ["red","redstone"],
-    "9e695c": ["brick","granite","jungle"],
-    "805a3d": ["brown","dirt","spruce","dark_oak"],
-    "c05f14": ["orange","resin"],
-    "562121": ["nether","mangrove","crimson"],
-    "a86140": ["acacia","copper"],
-    "e0a314": ["yellow","horn"],
-    "d3c79b": ["sand","end"],
-    "9e814c": ["oak","birch","bamboo"],
-    "68802e": ["green","leaves","azalea"],
-    "004344": ["sculk","dragon"],
-    "579d17": ["lime"],
-    "313396": ["blue","tube"],
-    "248807": ["light_blue"],
-    "409f9d": ["cyan","warped","prismarine"],
-    "66248c": ["purple","chorus"],
-    "cca5e5": ["magenta","purpur","bubble"],
-    "e9c1d3": ["pink","cherry","brain"]
   }
 }

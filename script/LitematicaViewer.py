@@ -2,6 +2,7 @@ import threading
 import sys
 import os
 import tkinter
+from idlelib.history import History
 from tkinter import filedialog
 from tkinter import ttk
 
@@ -42,8 +43,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     with open("error.log", "w") as f:
         f.write(error_msg)
     sys.exit(1)
-
-sys.excepthook = handle_exception
+sys.excepthook = handle_exception #ERROW.log
 
 
 your_module = importlib.import_module('litemapy')
@@ -62,6 +62,10 @@ Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃"
                      "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                      "粘土类": [], "红石":[], "铁类":[], "容器":[], "液体":[], "其他": []}
 images = {}
+
+if not os.path.exists(grs("history.json")):
+    with open(grs("history.json"), "w") as file:
+        file.write("{}")
 
 class Setting:
     def __init__(self):
@@ -86,7 +90,6 @@ class Setting:
         if self.choice:
             exit()
 
-
 def on_exit():
     with open(grs('log.txt'), "w") as file:
         fw = ""
@@ -94,7 +97,7 @@ def on_exit():
             fw += str(globals()[logvar].get())
         print(f"Log Rewrite:{fw}")
         file.write(fw)
-atexit.register(on_exit)
+atexit.register(on_exit) #退出绑定
 
 def ConAly():
     try:
@@ -149,16 +152,15 @@ def load_image(block_name):
         images[block_name] = img
         return img
 
-def insert_table(block_state, count, simple_type):
+def insert_table(block_state, count):
     if isinstance(block_state, BlockState):
         block_id = block_state._BlockState__block_id
         block_name = block_id.split(":")[-1]
     else:
         block_id = block_state
         block_name = block_id.split(":")[-1]
-    block_id_display = cn_translate(block_name) if simple_type else block_id
     img = load_image(block_name)
-    count_table.insert('', 'end', image=img, values=(block_id_display, str(count), convert_units(count)))
+    count_table.insert('', 'end', image=img, values=(cn_translate(block_name), str(count), convert_units(count), block_name))
     litem.update_idletasks()
 
 def output_data(classification : bool = False):
@@ -238,8 +240,10 @@ def Draw_Chart():
     return sorted_block[:1]
 
 
-def start_analysis(simple_type):
-    global schematic, Cla_Block, Block_pos, gl_view
+def start_analysis():
+    global schematic, Cla_Block, Block_pos, gl_view, Block
+    historyFile = json.load(open(grs("history.json"), 'r', encoding='utf-8'))
+    print(f"HistoryFile loaded: {historyFile}")
     print(file_path)
     if not file_path:
         import_file()
@@ -250,51 +254,88 @@ def start_analysis(simple_type):
     Block.clear()
     count_table.delete(*count_table.get_children())
     schematic = Schematic.load(file_path)
-    num = 0
-    print(f"Schematic loaded: {schematic}")
-    for region_index, region in enumerate(schematic.regions.values()):
-        print(f"Analyzing region {region_index + 1}")
-        size_x = region.maxx() - region.minx() + 1
-        size_y = region.maxy() - region.miny() + 1
-        size_z = region.maxz() - region.minz() + 1
-        for x in range(size_x):
-            for y in range(size_y):
-                for z in range(size_z):
-                    block_state = region._Region__palette[region._Region__blocks[x, y, z]]
-                    block_id = block_state._BlockState__block_id
-                    if block_id not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
-                        Block_pos.append(((x, y, z), str(block_id)))
-                        num += 1
-                        if block_id not in ["minecraft:piston_head",
-                                            "minecraft:nether_portal", "minecraft:moving_piston",
-                                            "minecraft:bedrock"]:
-                            output = block_id if simple_type else block_state
-                            if output not in Block:
-                                Block[output] = 1
-                            else:
-                                Block[output] += 1
-        if DoEntity.get():
-            for entity in region._Region__entities:
-                entity_type = "E/" + str(entity.id)
-                if entity_type not in ["E/minecraft:item", "E/minecraft:bat", "E/minecraft:experience_orb",
-                                       "E/minecraft:shulker_bullet"]:
-                    if entity_type not in Block:
-                        Block[entity_type] = 1
-                    else:
-                        Block[entity_type] += 1
-        time = 1 if entry_times.get() == "" else int(entry_times.get())
-        for val in Block:
-            id = val.split("[")[0].split(":")[-1]
-            type = Category_Tran(id)
-            if val.split("/")[0]=="E":
-                Cla_Block["实体"].append((Block[val], val))
-            elif type != "":
-                Cla_Block[type].append((Block[val], val))
-            else:
-                Cla_Block["其他"].append((Block[val], val))
-        print(f"{Cla_Block}")
-        label_bottom.config(
-            text=f"Size体积: {size_x}x{size_y}x{size_z} | Number数量: {num} | Times倍数: {time} | Types种类: {len(Block)}")
+    if str(schematic) not in historyFile:
+        num = 0
+        print(f"--Schematic loaded: {schematic}")
+        for region_index, region in enumerate(schematic.regions.values()):
+            print(f"--Analyzing region {region_index + 1}")
+            size_x = region.maxx() - region.minx() + 1
+            size_y = region.maxy() - region.miny() + 1
+            size_z = region.maxz() - region.minz() + 1
+            for x in range(size_x):
+                for y in range(size_y):
+                    for z in range(size_z):
+                        block_state = region._Region__palette[region._Region__blocks[x, y, z]]
+                        block_id = block_state._BlockState__block_id
+                        block_property = block_state._BlockState__properties
+                        if block_id not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
+                            Block_pos.append([[x, y, z], str(block_id)])
+                            num += 1
+                            if block_id not in ["minecraft:piston_head",
+                                                "minecraft:nether_portal", "minecraft:moving_piston",
+                                                "minecraft:bedrock"]:
+                                Analysis= {
+                                    "minecraft:farmland": "minecraft:dirt",
+                                    "minecraft:bubble_column": "minecraft:water"
+                                }
+                                prop_list = [('waterlogged', 'true', "minecraft:water", 1),
+                                             ('type', 'double', None, 2),
+                                             ('half', 'upper', None, -1),
+                                             ('part', 'head', None, -1),
+                                             ('eggs', '', "minecraft:turtle_egg", 0),
+                                             ('pickles', '', "minecraft:sea_pickle", 0),
+                                             ('distance', '', None, 0),
+                                             ('charges', '', "minecraft:glowstone", 0),
+                                             ('flower_amount', '', "minecraft:pink_petals", 0)]
+                                for a in Analysis:
+                                    output = Analysis[a] if block_id == a else block_id
+                                output = str(block_id if not output else output).replace("wall_","")
+                                #if block_property :print(block_id, block_property, output, type(output))
+                                for pt, pv, pf, pn in prop_list:
+                                    if pt in block_property:
+                                        if not pn: pn = int(block_property[pt])
+                                        if block_property[pt] == pv or not pv:
+                                            if not pf:
+                                                Block[output] = Block[output]+pn if output in Block else pn
+                                            else:
+                                                Block[pf] = Block[pf]+pn if output in Block else pn
+                                            continue
+                                Block[output] = Block[output]+1 if output in Block else 1
+            if DoEntity.get():
+                for entity in region._Region__entities:
+                    entity_type = "E/" + str(entity.id)
+                    if entity_type not in ["E/minecraft:item", "E/minecraft:bat", "E/minecraft:experience_orb",
+                                           "E/minecraft:shulker_bullet"]:
+                        if entity_type not in Block:
+                            Block[entity_type] = 1
+                        else:
+                            Block[entity_type] += 1
+        historyFile[str(schematic)] = [Block, Block_pos, [size_x, size_y, size_z, num]]
+        print(historyFile)
+        with open("history.json", 'w') as jh:
+            json.dump(historyFile, jh, indent=4)
+            json.dump("{\"__3xamp10__\": [{\"minecraft:dirt\": 1}, [[0, 0, 0], \"minecraft:dirt\"], [1, 1, 1, 1]]}", jh, indent=4)
+            print(f"History File saved with {str(schematic)}")
+
+    else:
+        print(f"Find History File with {str(schematic)}")
+        Block = historyFile[str(schematic)][0]
+        Block_pos = historyFile[str(schematic)][1]
+        size_x,size_y,size_z,num=historyFile[str(schematic)][2]
+
+    time = 1 if entry_times.get() == "" else int(entry_times.get())
+    for val in Block:
+        id = val.split("[")[0].split(":")[-1]
+        typeB = Category_Tran(id)
+        if val.split("/")[0]=="E":
+            Cla_Block["实体"].append((Block[val], val))
+        elif typeB != "":
+            Cla_Block[typeB].append((Block[val], val))
+        else:
+            Cla_Block["其他"].append((Block[val], val))
+    print(f"{Cla_Block}")
+    label_bottom.config(
+        text=f"Size体积: {size_x}x{size_y}x{size_z} | Number数量: {num} | Times倍数: {time} | Types种类: {len(Block)}")
 
     top1 = Draw_Chart()
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
@@ -325,7 +366,7 @@ def start_analysis(simple_type):
             count = count * int(entry_times.get())
         except:
             count = count * 1
-        insert_table(block_state, count, simple_type)
+        insert_table(block_state, count)
 
     if Do3d.get():
         if Pn3d.get():
@@ -436,7 +477,7 @@ if __name__ == "__main__":
     btn_import = CTkButton(frame_top, text="Import导入", command=import_file, font=(DefaultFont, 15))
     btn_import.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_import.pack(side=tk.LEFT, padx=5)
-    btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=(DefaultFont, 15))
+    btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, 15))
     btn_simstart.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_simstart.pack(side=tk.LEFT, padx=5)
 
@@ -569,15 +610,17 @@ if __name__ == "__main__":
 
     sroll = tk.Scrollbar(frame_chart, orient="vertical")
     sroll.pack(side=tk.RIGHT, fill=tk.Y, padx=10)
-    count_table = ttk.Treeview(frame_chart, column=('blockID', 'num', 'unit'), height=7, yscrollcommand=sroll.set)
+    count_table = ttk.Treeview(frame_chart, column=('blockID', 'num', 'unit', 'ID'), height=7, yscrollcommand=sroll.set)
     sroll.config(command=count_table.yview)
-    count_table.heading('blockID', text='ID/名字', anchor="center")
-    count_table.heading('num', text='Num数量', anchor="center")
-    count_table.heading('unit', text='Unit单位数', anchor="center")
-    count_table.column("#0", width=5, anchor="e")
-    count_table.column("blockID", width=200)
-    count_table.column("num", width=100)
-    count_table.column("unit", width=100)
+    count_table.heading('blockID', text='名字', anchor="center")
+    count_table.heading('num', text='数', anchor="e")
+    count_table.heading('unit', text='量', anchor="w")
+    count_table.heading('ID', text='ID', anchor="center")
+    count_table.column("#0", width=10)
+    count_table.column("blockID", width=150)
+    count_table.column("num", width=40)
+    count_table.column("unit", width=80, anchor="e")
+    count_table.column("ID", width=200)
     count_table.config(height=20)
     count_table.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=10)
 

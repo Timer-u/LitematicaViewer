@@ -34,7 +34,7 @@
         "ui": {
             "Font": "SimHei",
             "FontSize": 10,
-            "ColorMap": "BlueAr",
+            "ColorMap": "Dark",
             "cornerRadius": 10
         }
     }
