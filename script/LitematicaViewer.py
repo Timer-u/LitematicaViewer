@@ -11,6 +11,7 @@ from customtkinter import *
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
 from easygui import boolbox,choicebox
+from nuitka.nodes.shapes.BuiltinTypeShapes import sub_shapes_set
 
 sys.path.extend(os.path.dirname(__file__)+"..")
 
@@ -274,9 +275,12 @@ def start_analysis():
                             if block_id not in ["minecraft:piston_head",
                                                 "minecraft:nether_portal", "minecraft:moving_piston",
                                                 "minecraft:bedrock"]:
+                                MBB = ["potted_", "_cake", "wall_", "_cauldron"]
                                 Analysis= {
                                     "minecraft:farmland": "minecraft:dirt",
-                                    "minecraft:bubble_column": "minecraft:water"
+                                    "minecraft:dirt_path": "minecraft:dirt",
+                                    "minecraft:bubble_column": "minecraft:water",
+                                    "minecraft:soul_fire": "minecraft:fire"
                                 }
                                 prop_list = [('waterlogged', 'true', "minecraft:water", 1),
                                              ('type', 'double', None, 2),
@@ -284,13 +288,14 @@ def start_analysis():
                                              ('part', 'head', None, -1),
                                              ('eggs', '', "minecraft:turtle_egg", 0),
                                              ('pickles', '', "minecraft:sea_pickle", 0),
-                                             ('distance', '', None, 0),
                                              ('charges', '', "minecraft:glowstone", 0),
                                              ('flower_amount', '', "minecraft:pink_petals", 0)]
+                                output = block_id
                                 for a in Analysis:
                                     output = Analysis[a] if block_id == a else block_id
-                                output = str(block_id if not output else output).replace("wall_","")
-                                #if block_property :print(block_id, block_property, output, type(output))
+                                for root in MBB:
+                                    if root in block_id:
+                                        output = block_id.replace(root, "")
                                 for pt, pv, pf, pn in prop_list:
                                     if pt in block_property:
                                         if not pn: pn = int(block_property[pt])
@@ -314,7 +319,6 @@ def start_analysis():
         print(historyFile)
         with open("history.json", 'w') as jh:
             json.dump(historyFile, jh, indent=4)
-            json.dump("{\"__3xamp10__\": [{\"minecraft:dirt\": 1}, [[0, 0, 0], \"minecraft:dirt\"], [1, 1, 1, 1]]}", jh, indent=4)
             print(f"History File saved with {str(schematic)}")
 
     else:
