@@ -396,6 +396,70 @@ def start_analysis():
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
     litem.update_idletasks()
 
+
+class Fix_Block:
+    def __init__(self, id, block_property):
+        global Block
+        self.id = id
+        self.prop = block_property
+        self.susses = False
+        self.output = ""
+        self.MBB = ["potted_", "_cake", "wall_"]
+        self.Analysis = {  # 方块检测替换
+            "minecraft:farmland": "minecraft:dirt",
+            "minecraft:dirt_path": "minecraft:dirt",
+            "minecraft:bubble_column": "minecraft:water",
+            "minecraft:lava_cauldron": ["minecraft:cauldron", "minecraft:lava"],
+            "minecraft:powder_snow_cauldron": ["minecraft:cauldron", "minecraft:powder_snow"],
+            "minecraft:water_cauldron": ["minecraft:cauldron", "minecraft:	water"]
+        }
+        self.prop_list = [  # 属性检测替换
+            ('waterlogged', 'true', "minecraft:water", 1),  # 含水
+            ('type', 'double', None, 2),  # 双板砖
+            ('half', 'upper', None, -1),  # 两格高物体
+            ('part', 'head', None, -1),  # 床
+            ('eggs', '', "minecraft:turtle_egg", 0),  # 海龟蛋
+            ('pickles', '', "minecraft:sea_pickle", 0),  # 海泡菜
+            ('charges', '', "minecraft:glowstone", 0),  # 重生锚
+            ('flower_amount', '', "minecraft:pink_petals", 0)]  # 花簇
+    def multi_block_block(self):
+        print("miltiBlock")
+        for root in self.MBB:
+            if root in self.id:
+                self.output = self.id.replace(root, "")
+                Block[self.output] = Block[self.output] + 1 if self.output in Block else 1
+                return True
+        return False
+
+    def block_to_block(self):
+        print("blocktoblock")
+        for old in self.Analysis:
+            if type(old) == list:
+                for b in old:
+                    Block[b] = Block[b] + 1 if b in Block else 1
+                return True
+            elif self.id == old:
+                Block[self.Analysis[old]] = Block[self.Analysis[old]] + 1 if self.Analysis[old] in Block else 1
+                return True
+            else:
+                Block[self.id] = Block[self.id] + 1 if self.id in Block else 1
+                return True
+        return False
+
+    def prop_to_block(self):
+        print("prop")
+        for pt, pv, pf, pn in self.prop_list:
+            if pt in self.prop:
+                self.susses=True
+                if not pn: pn = int(self.prop[pt])
+                if self.prop[pt] == pv or not pv:
+                    if not pf:
+                        Block[self.id] = Block[self.id] + pn if self.id in Block else pn
+                    else:
+                        Block[pf] = Block[pf] + pn if self.id in Block else pn
+                    continue
+        return self.susses
+
 if __name__ == "__main__":
     #  主窗口
     litem = tk.Tk()
