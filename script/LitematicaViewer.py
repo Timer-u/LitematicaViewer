@@ -10,7 +10,7 @@ from PIL.ImageOps import expand
 from customtkinter import *
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
-from easygui import boolbox,choicebox
+from easygui import boolbox,choicebox,msgbox
 from nuitka.nodes.shapes.BuiltinTypeShapes import sub_shapes_set
 
 sys.path.extend(os.path.dirname(__file__)+"..")
@@ -52,7 +52,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.6.4'
+APP_VERSION = '0.7'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -87,8 +87,7 @@ class Setting:
         with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
             json.dump(data, js, indent=4)
             print(f"Successfully Change Color Map into {self.colormap}")
-        self.choice = boolbox("是否关闭 EXIT", title="Setting")
-        if self.choice:
+        if boolbox("是否关闭 EXIT 如没关闭请自行重启 Restart yourself", title="Setting"):
             exit()
 
 def on_exit():
@@ -255,77 +254,77 @@ def start_analysis():
     Block.clear()
     count_table.delete(*count_table.get_children())
     schematic = Schematic.load(file_path)
-    if str(schematic) not in historyFile:
-        num = 0
-        print(f"--Schematic loaded: {schematic}")
-        for region_index, region in enumerate(schematic.regions.values()):
-            print(f"--Analyzing region {region_index + 1}")
-            size_x = region.maxx() - region.minx() + 1
-            size_y = region.maxy() - region.miny() + 1
-            size_z = region.maxz() - region.minz() + 1
-            for x in range(size_x):
-                for y in range(size_y):
-                    for z in range(size_z):
-                        block_state = region._Region__palette[region._Region__blocks[x, y, z]]
-                        block_id = block_state._BlockState__block_id
-                        block_property = block_state._BlockState__properties
-                        if block_id not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
-                            Block_pos.append([[x, y, z], str(block_id)])
-                            num += 1
-                            if block_id not in ["minecraft:piston_head",
-                                                "minecraft:nether_portal", "minecraft:moving_piston",
-                                                "minecraft:bedrock"]:
-                                MBB = ["potted_", "_cake", "wall_", "_cauldron"]
-                                Analysis= {
-                                    "minecraft:farmland": "minecraft:dirt",
-                                    "minecraft:dirt_path": "minecraft:dirt",
-                                    "minecraft:bubble_column": "minecraft:water",
-                                    "minecraft:soul_fire": "minecraft:fire"
-                                }
-                                prop_list = [('waterlogged', 'true', "minecraft:water", 1),
-                                             ('type', 'double', None, 2),
-                                             ('half', 'upper', None, -1),
-                                             ('part', 'head', None, -1),
-                                             ('eggs', '', "minecraft:turtle_egg", 0),
-                                             ('pickles', '', "minecraft:sea_pickle", 0),
-                                             ('charges', '', "minecraft:glowstone", 0),
-                                             ('flower_amount', '', "minecraft:pink_petals", 0)]
-                                output = block_id
-                                for a in Analysis:
-                                    output = Analysis[a] if block_id == a else block_id
-                                for root in MBB:
-                                    if root in block_id:
-                                        output = block_id.replace(root, "")
-                                for pt, pv, pf, pn in prop_list:
-                                    if pt in block_property:
-                                        if not pn: pn = int(block_property[pt])
-                                        if block_property[pt] == pv or not pv:
-                                            if not pf:
-                                                Block[output] = Block[output]+pn if output in Block else pn
-                                            else:
-                                                Block[pf] = Block[pf]+pn if output in Block else pn
-                                            continue
-                                Block[output] = Block[output]+1 if output in Block else 1
-            if DoEntity.get():
-                for entity in region._Region__entities:
-                    entity_type = "E/" + str(entity.id)
-                    if entity_type not in ["E/minecraft:item", "E/minecraft:bat", "E/minecraft:experience_orb",
-                                           "E/minecraft:shulker_bullet"]:
-                        if entity_type not in Block:
-                            Block[entity_type] = 1
-                        else:
-                            Block[entity_type] += 1
-        historyFile[str(schematic)] = [Block, Block_pos, [size_x, size_y, size_z, num]]
+    #if str(schematic) not in historyFile:
+    num = 0
+    print(f"--Schematic loaded: {schematic}")
+    for region_index, region in enumerate(schematic.regions.values()):
+        print(f"--Analyzing region {region_index + 1}")
+        size_x = region.maxx() - region.minx() + 1
+        size_y = region.maxy() - region.miny() + 1
+        size_z = region.maxz() - region.minz() + 1
+        for x in range(size_x):
+            for y in range(size_y):
+                for z in range(size_z):
+                    block_state = region._Region__palette[region._Region__blocks[x, y, z]]
+                    block_id = block_state._BlockState__block_id
+                    block_property = block_state._BlockState__properties
+                    if block_id not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
+                        Block_pos.append([[x, y, z], str(block_id)])
+                        num += 1
+                        if block_id not in ["minecraft:piston_head",
+                                            "minecraft:nether_portal", "minecraft:moving_piston",
+                                            "minecraft:bedrock"]:
+                            MBB = ["potted_", "_cake", "wall_", "_cauldron"]
+                            Analysis= {
+                                "minecraft:farmland": "minecraft:dirt",
+                                "minecraft:dirt_path": "minecraft:dirt",
+                                "minecraft:bubble_column": "minecraft:water",
+                                "minecraft:soul_fire": "minecraft:fire"
+                            }
+                            prop_list = [('waterlogged', 'true', "minecraft:water", 1),
+                                         ('type', 'double', None, 2),
+                                         ('half', 'upper', None, -1),
+                                         ('part', 'head', None, -1),
+                                         ('eggs', '', "minecraft:turtle_egg", 0),
+                                         ('pickles', '', "minecraft:sea_pickle", 0),
+                                         ('charges', '', "minecraft:glowstone", 0),
+                                         ('flower_amount', '', "minecraft:pink_petals", 0)]
+                            output = block_id
+                            for a in Analysis:
+                                output = Analysis[a] if block_id == a else block_id
+                            for root in MBB:
+                                if root in block_id:
+                                    output = block_id.replace(root, "")
+                            for pt, pv, pf, pn in prop_list:
+                                if pt in block_property:
+                                    if not pn: pn = int(block_property[pt])
+                                    if block_property[pt] == pv or not pv:
+                                        if not pf:
+                                            Block[output] = Block[output]+pn if output in Block else pn
+                                        else:
+                                            Block[pf] = Block[pf]+pn if output in Block else pn
+                                        continue
+                            Block[output] = Block[output]+1 if output in Block else 1
+        if DoEntity.get():
+            for entity in region._Region__entities:
+                entity_type = "E/" + str(entity.id)
+                if entity_type not in ["E/minecraft:item", "E/minecraft:bat", "E/minecraft:experience_orb",
+                                       "E/minecraft:shulker_bullet"]:
+                    if entity_type not in Block:
+                        Block[entity_type] = 1
+                    else:
+                        Block[entity_type] += 1
+        '''historyFile[str(schematic)] = [Block, Block_pos, [size_x, size_y, size_z, num]]
         print(historyFile)
         with open("history.json", 'w') as jh:
             json.dump(historyFile, jh, indent=4)
-            print(f"History File saved with {str(schematic)}")
+            print(f"History File saved with {str(schematic)}")'''
 
-    else:
+    '''else:
         print(f"Find History File with {str(schematic)}")
         Block = historyFile[str(schematic)][0]
         Block_pos = historyFile[str(schematic)][1]
-        size_x,size_y,size_z,num=historyFile[str(schematic)][2]
+        size_x,size_y,size_z,num=historyFile[str(schematic)][2]'''
 
     time = 1 if entry_times.get() == "" else int(entry_times.get())
     for val in Block:
@@ -396,70 +395,6 @@ def start_analysis():
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
     litem.update_idletasks()
 
-
-class Fix_Block:
-    def __init__(self, id, block_property):
-        global Block
-        self.id = id
-        self.prop = block_property
-        self.susses = False
-        self.output = ""
-        self.MBB = ["potted_", "_cake", "wall_"]
-        self.Analysis = {  # 方块检测替换
-            "minecraft:farmland": "minecraft:dirt",
-            "minecraft:dirt_path": "minecraft:dirt",
-            "minecraft:bubble_column": "minecraft:water",
-            "minecraft:lava_cauldron": ["minecraft:cauldron", "minecraft:lava"],
-            "minecraft:powder_snow_cauldron": ["minecraft:cauldron", "minecraft:powder_snow"],
-            "minecraft:water_cauldron": ["minecraft:cauldron", "minecraft:	water"]
-        }
-        self.prop_list = [  # 属性检测替换
-            ('waterlogged', 'true', "minecraft:water", 1),  # 含水
-            ('type', 'double', None, 2),  # 双板砖
-            ('half', 'upper', None, -1),  # 两格高物体
-            ('part', 'head', None, -1),  # 床
-            ('eggs', '', "minecraft:turtle_egg", 0),  # 海龟蛋
-            ('pickles', '', "minecraft:sea_pickle", 0),  # 海泡菜
-            ('charges', '', "minecraft:glowstone", 0),  # 重生锚
-            ('flower_amount', '', "minecraft:pink_petals", 0)]  # 花簇
-    def multi_block_block(self):
-        print("miltiBlock")
-        for root in self.MBB:
-            if root in self.id:
-                self.output = self.id.replace(root, "")
-                Block[self.output] = Block[self.output] + 1 if self.output in Block else 1
-                return True
-        return False
-
-    def block_to_block(self):
-        print("blocktoblock")
-        for old in self.Analysis:
-            if type(old) == list:
-                for b in old:
-                    Block[b] = Block[b] + 1 if b in Block else 1
-                return True
-            elif self.id == old:
-                Block[self.Analysis[old]] = Block[self.Analysis[old]] + 1 if self.Analysis[old] in Block else 1
-                return True
-            else:
-                Block[self.id] = Block[self.id] + 1 if self.id in Block else 1
-                return True
-        return False
-
-    def prop_to_block(self):
-        print("prop")
-        for pt, pv, pf, pn in self.prop_list:
-            if pt in self.prop:
-                self.susses=True
-                if not pn: pn = int(self.prop[pt])
-                if self.prop[pt] == pv or not pv:
-                    if not pf:
-                        Block[self.id] = Block[self.id] + pn if self.id in Block else pn
-                    else:
-                        Block[pf] = Block[pf] + pn if self.id in Block else pn
-                    continue
-        return self.susses
-
 if __name__ == "__main__":
     #  主窗口
     litem = tk.Tk()
@@ -467,6 +402,14 @@ if __name__ == "__main__":
     litem.iconbitmap(grs("icon.ico"))
     litem.geometry("1280x768")
     litem.configure(bg=color_map["BG"])
+
+    if data["Save"]["First_open"] == "0":
+        msgbox('''LitematicaViewer投影查看器V0.7更新报告Log
+        1. 更新界面主题颜色 帮助-界面颜色更改主题色
+        2. 修改分析BUG 特殊方块将正常分析 (门,海龟蛋,土径...)''')
+        data["Save"]["First_open"] = "1"
+        with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
+            json.dump(data, js, indent=2)
 
     LogVar = ["DoEntity", "DoLifr", "DoStat", "DoAnal", "Do3d", "Pn3d", "Li3d", "Sp3d"]
     menu = tk.Menu(litem)
