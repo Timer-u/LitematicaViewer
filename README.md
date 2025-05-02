@@ -1,10 +1,10 @@
-LitematicaViewer投影查看器 v0.6.4
+LitematicaViewer投影查看器 v0.7.1
 =================================
 
 ### Minecraft tool - A tool make easy to check litematica files 让我的世界投影查看更加的轻量便捷
-[![ver](https://img.shields.io/badge/Version-beta_0.5.6a-red)]()
+[![ver](https://img.shields.io/badge/Version-0.7.1-red)]()
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/v/release/Albertchen857/LitematicaViewer)]()
-[![三连](https://img.shields.io/badge/-一键三连-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1H9ZVYtEta/?share_source=copy_web&vd_source=cb300adad11a7c409e2ff69281fb5e49)
+[![三连](https://img.shields.io/badge/-一键三连-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1H9ZVYtEta/?spm_id_from=333.1387.homepage.video_card.click&vd_source=20c164cb28b2da114329d8728dad750f)
 [![转发](https://img.shields.io/badge/-转发-00A1D6?logo=bilibili&logoColor=white)](https://space.bilibili.com/3494373232741268)
 [![YoutubeIntro](https://img.shields.io/badge/-Youtube-00A1D6?logo=youtube&logoColor=red)](https://www.youtube.com/watch?v=0nofWrfKJeg)
 
@@ -22,6 +22,7 @@ A light Viewer of Litematica files
 * `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own setting limitations
 * `3D Rendering` 3d Rendering target Litematic file.
 * `Transfer Litematic File Version` Transfer 1.21 Litematic file into old versions (1.16 ~ 1.12)
+* `UI ColorMap` Change the theme color. (Classic Blue, Light Green, Darkly)
 
 一个轻量便捷的投影查看器
 
@@ -34,6 +35,7 @@ A light Viewer of Litematica files
 * `替换特定方块` 快速替换/限制投影里的不同方块
 * `3D渲染` 3D渲染目标投影 (可能引起卡顿)
 * `跨版本转换投影` 将默认最新版本投影转换到1.16/1.13版本的投影文件
+* `界面颜色` 更改界面主题色 (蔚蓝色,亮绿色,暗灰色)
 
 # 分支图
 ```
@@ -58,5 +60,5 @@ A light Viewer of Litematica files
 | |-替换特定方块ChangeIndentifyBlock
 | |-投影转换版本 (1.17/1.15/1.12)TransVersion
 |-界面UI
-  |-字体/颜色/布局自定义美化(开发) UIupdate
+  |-字体/颜色/布局自定义美化 UIupdate (V0.7)
 ```

@@ -11,9 +11,9 @@ from customtkinter import *
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
 from easygui import boolbox,choicebox,msgbox
-from nuitka.nodes.shapes.BuiltinTypeShapes import sub_shapes_set
 
-sys.path.extend(os.path.dirname(__file__)+"..")
+
+sys.path.extend(os.path.join(os.path.dirname(__file__), ".."))
 
 
 import LitRender
@@ -52,7 +52,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.7'
+APP_VERSION = '0.7.1'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -123,8 +123,8 @@ def CS_trans_dict(inp:str) -> dict:
 def import_file():
     global file_path, file_name
     file_path = filedialog.askopenfilename(filetypes=[("Litematic File","*.litematic"),("All File","*.")])
-    file_path = file_path.replace("\\", "/")
-    file_name = file_path.split("/")[-1]
+    file_path = os.path.normpath(file_path)
+    file_name = file_path.split("\\")[-1]
     label_middle.config(text=f"{file_name}")
     print(f"Imported file: {file_path}")
 
@@ -195,7 +195,10 @@ def output_data(classification : bool = False):
                         f.write(f"{cn_translate(id)},{id},{num},{convert_units(num)}\n")
                     else:
                         f.write(f"{num}[{convert_units(num)}] | {cn_translate(id)}[{id}]\n")
-    os.startfile(output_file_path)
+    if sys.platform == 'darwin':
+        subprocess.call(['open', output_file_path])
+    elif sys.platform == 'win32':
+        os.startfile(output_file_path)
 
 def Draw_Chart():
     ax1.clear()
@@ -491,6 +494,11 @@ if __name__ == "__main__":
     btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, 15))
     btn_simstart.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_simstart.pack(side=tk.LEFT, padx=5)
+    btn_hint = CTkButton(frame_top, text="!HINT注意事项!",
+                             command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用'''),
+                             font=(DefaultFont, 15))
+    btn_hint.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
+    btn_hint.pack(side=tk.LEFT, padx=5)
 
     btn_github = CTkButton(frame_top, text="GitHub", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, 15))
     btn_github.configure(fg_color="black",text_color="#f8f9fa",corner_radius=DefaultCorner)
