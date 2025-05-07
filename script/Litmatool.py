@@ -1,6 +1,4 @@
 import json, subprocess, sys, os
-import numpy as np
-import scipy.stats as stats
 
 def grs(relative_path):
     """ 动态获取资源的绝对路径 """
@@ -57,17 +55,6 @@ def Category_Tran(data):
             if prop in value_list:
                 return key
     return ""
-
-
-def statistics(data):
-    print(data)
-    if not data: return []
-    mean = np.mean(data)
-    median = np.median(data)
-    mode = stats.mode(data)
-    std_dev = np.std(data, ddof=1)
-    IQR = np.percentile(data, 75)-np.percentile(data, 25)
-    return [IQR,mean,median,mode,std_dev]
 
 def id_tran_name(id: object) -> object:
     """

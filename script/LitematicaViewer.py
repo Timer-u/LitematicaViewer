@@ -52,7 +52,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.7.1'
+APP_VERSION = '0.7.2'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -74,11 +74,15 @@ class Setting:
         self.colormap = ""
     def set_colormap(self):
         global color_map, data, litem
-        self.choice = choicebox("更换界面主题色 New Ui ColorMap (重启后生效)", title="Setting", choices=["蔚蓝色BlueAr","亮绿色LiGreen","暗色Darkly"])
+        self.choice = choicebox("更换界面主题色 New Ui ColorMap (重启后生效)", title="Setting", choices=["蔚蓝色BlueAr","亮绿色LiGreen","暗色Darkly","深蓝色DarkBlue","粉色Pink"])
         if self.choice == "亮绿色LiGreen":
             self.colormap = "Green"
         elif self.choice == "暗色Darkly":
             self.colormap = "Dark"
+        elif self.choice == "深蓝色DarkBlue":
+            self.colormap = "DBlue"
+        elif self.choice == "粉色Pink":
+            self.colormap = "Pink"
         else:
             self.colormap = "BlueAr"
 
@@ -345,9 +349,6 @@ def start_analysis():
 
     top1 = Draw_Chart()
     sorted_block = sorted(Block.items(), key=lambda x: x[1], reverse=True)
-    numbers = [item[1] for item in list(Block.items())]
-    stat=statistics(numbers)
-    if not stat: return
     a_den.config(text=f"{num / (size_x * size_y * size_z) * 100:.1f}%")
     redly = (sum(n for n, _ in Cla_Block["红石"])+sum(n for n, _ in Cla_Block["容器"])) / (num-sorted_block[0][1] if len(Block)>5 else num)
     if num > 10:
@@ -366,7 +367,7 @@ def start_analysis():
     a_red.config(text=f"{redly*100:.1f}%")
     a_redt.config(text=f"{me_type}")
     fluid = sum(n for n, _ in Cla_Block["液体"])
-    a_liq.config(text=f"{fluid / num * 100:.1f}%\n{fluid}")
+    a_liq.config(text=f"{fluid / num * 100:.1f}%\n{fluid}u")
     for index, (block_state, count) in enumerate(sorted_block):
         try:
             count = count * int(entry_times.get())
