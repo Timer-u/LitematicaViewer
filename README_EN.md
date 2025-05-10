@@ -1,7 +1,6 @@
 [简体中文](./README.md) | **English**
 
-LitematicaViewer v0.7.2
-======================
+# LitematicaViewer v0.7.2
 
 ### Minecraft tool - A tool to easily check Litematica files
 
@@ -15,16 +14,16 @@ Please give a star! I want Stars~ Target 100 stars
 
 A light Viewer for Litematica files
 
-*   `Input file` Input your file first and choose a mode to check your file.
-*   `Output` Output Litematica analysis data into a file or chart. (Text File & Excel File)
-*   `Classification Output` Output Litematica analysis data with classification into a file or chart. (Text File & Excel File)
-*   `Simple Analysis` Used for easy checking of block numbers and names (no properties).
-*   `Container Analysis` Analyze containers with items inside, showing items and basic info.
-*   `Spawn Regular Shape` A Light Tool to generate a regular shape.
-*   `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own set limitations.
-*   `3D Rendering` 3D Rendering for Litematic files.
-*   `Transfer Litematic File Version` Transfer 1.21 Litematic files into older versions (1.16 ~ 1.12).
-*   `UI ColorMap` Change the theme color. (Classic Blue, Light Green, Darkly, Dark Blue, Pink)
+- `Input file` Input your file first and choose a mode to check your file.
+- `Output` Output Litematica analysis data into a file or chart. (Text File & Excel File)
+- `Classification Output` Output Litematica analysis data with classification into a file or chart. (Text File & Excel File)
+- `Simple Analysis` Used for easy checking of block numbers and names (no properties).
+- `Container Analysis` Analyze containers with items inside, showing items and basic info.
+- `Spawn Regular Shape` A Light Tool to generate a regular shape.
+- `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own set limitations.
+- `3D Rendering` 3D Rendering for Litematic files.
+- `Transfer Litematic File Version` Transfer 1.21 Litematic files into older versions (1.16 ~ 1.12).
+- `UI ColorMap` Change the theme color. (Classic Blue, Light Green, Darkly, Dark Blue, Pink)
 
 # Branch Diagram
 
