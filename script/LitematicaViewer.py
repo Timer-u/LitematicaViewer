@@ -4,13 +4,13 @@ import os
 import tkinter
 from idlelib.history import History
 from tkinter import filedialog
-from tkinter import ttk
+from tkinter import ttk, font
 
 from PIL.ImageOps import expand
 from customtkinter import *
 from litemapy import Schematic, BlockState
 from PIL import Image, ImageTk
-from easygui import boolbox,choicebox,msgbox
+from easygui import boolbox,choicebox,msgbox,enterbox
 
 
 sys.path.extend(os.path.join(os.path.dirname(__file__), ".."))
@@ -36,7 +36,7 @@ import traceback
 data = json.load(open(grs(os.path.join('lang', 'data.json')), 'r', encoding='utf-8'))
 color_map = data["Color_map"][data["Save"]["ui"]["ColorMap"]]
 DefaultFont = data["Save"]["ui"]["Font"]
-DefaultFontSize = data["Save"]["ui"]["FontSize"]
+DefaultFontSize = int(data["Save"]["ui"]["FontSize"])
 DefaultCorner = data["Save"]["ui"]["cornerRadius"]
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -71,10 +71,10 @@ if not os.path.exists(grs("history.json")):
 class Setting:
     def __init__(self):
         self.choice = None
-        self.colormap = ""
     def set_colormap(self):
+        self.colormap = ""
         global color_map, data, litem
-        self.choice = choicebox("更换界面主题色 New Ui ColorMap (重启后生效)", title="Setting", choices=["蔚蓝色BlueAr","亮绿色LiGreen","暗色Darkly","深蓝色DarkBlue","粉色Pink"])
+        self.choice = choicebox(f"更换界面主题色 New Ui ColorMap\n目前:{data["Save"]["ui"]["ColorMap"]}", title="Setting", choices=["蔚蓝色BlueAr","亮绿色LiGreen","暗色Darkly","深蓝色DarkBlue","粉色Pink"])
         if self.choice == "亮绿色LiGreen":
             self.colormap = "Green"
         elif self.choice == "暗色Darkly":
@@ -83,15 +83,37 @@ class Setting:
             self.colormap = "DBlue"
         elif self.choice == "粉色Pink":
             self.colormap = "Pink"
-        else:
+        elif self.choice == "蔚蓝色BlueAr":
             self.colormap = "BlueAr"
-
+        else:
+            return
         data["Save"]["ui"]["ColorMap"] = self.colormap
         color_map = data["Color_map"][self.colormap]
+        self.update()
+
+    def set_font(self):
+        global DefaultFont
+        self.choice = choicebox(f"选择字体\n目前:{DefaultFont}\n如字体前有@则为竖排字体\nFont with @ in the front would be vertical font", title="Setting", choices=sorted(font.families()))
+        if not self.choice:
+            return
+        DefaultFont = self.choice
+        data["Save"]["ui"]["Font"] = self.choice
+        self.update()
+
+    def set_fontsize(self):
+        global DefaultFontSize
+        self.choice = enterbox(f"选择字体大小\n目前:{DefaultFontSize} | 默认:10\n字体大小建议选择5~15", title="Setting", strip=True, default=DefaultFontSize)
+        if not (self.choice or self.choice.isdigit()):
+            return
+        DefaultFontSize = self.choice
+        data["Save"]["ui"]["FontSize"] = int(self.choice)
+        self.update()
+
+    def update(self):
         with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
             json.dump(data, js, indent=4)
-            print(f"Successfully Change Color Map into {self.colormap}")
-        if boolbox("是否关闭 EXIT 如没关闭请自行重启 Restart yourself", title="Setting"):
+            print(f"Successfully Upload Setting")
+        if boolbox("是否关闭EXIT | 如没关闭请自行重启 Restart yourself", title="Setting"):
             exit()
 
 def on_exit():
@@ -203,6 +225,10 @@ def output_data(classification : bool = False):
         subprocess.call(['open', output_file_path])
     elif sys.platform == 'win32':
         os.startfile(output_file_path)
+
+plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei']  # 指定中文字体
+plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+#plt.figure(facecolor=color_map["MC"])
 
 def Draw_Chart():
     ax1.clear()
@@ -408,7 +434,7 @@ if __name__ == "__main__":
     litem.configure(bg=color_map["BG"])
 
     if data["Save"]["First_open"] == "0":
-        msgbox('''LitematicaViewer投影查看器V0.7更新报告Log
+        msgbox('''LitematicaViewer投影查看器V0.7.2更新报告Log
         1. 更新界面主题颜色 帮助-界面颜色更改主题色
         2. 修改分析BUG 特殊方块将正常分析 (门,海龟蛋,土径...)''')
         data["Save"]["First_open"] = "1"
@@ -444,44 +470,46 @@ if __name__ == "__main__":
                     globals()[logvar] = tk.IntVar(value=1)
 
     menu_analysis = tk.Menu(menu, tearoff=0)
-    menu_analysis.add_command(label="Import导入", command=import_file, font=(DefaultFont, 10))
-    menu_analysis.add_command(label="Output导出", command=lambda:output_data(False), font=(DefaultFont, 10))
-    menu_analysis.add_command(label="ClassifiedOutput分类导出", command=lambda:output_data(True), font=(DefaultFont, 10))
-    menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=(DefaultFont, 10))
-    #menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=False).start(), font=(DefaultFont, 10))
+    menu_analysis.add_command(label="Import导入", command=import_file, font=(DefaultFont, DefaultFontSize))
+    menu_analysis.add_command(label="Output导出", command=lambda:output_data(False), font=(DefaultFont, DefaultFontSize))
+    menu_analysis.add_command(label="ClassifiedOutput分类导出", command=lambda:output_data(True), font=(DefaultFont, DefaultFontSize))
+    menu_analysis.add_command(label="SimpleAnalysis简洁分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=True).start(), font=(DefaultFont, DefaultFontSize))
+    #menu_analysis.add_command(label="FullAnalysis全面分析", command=lambda:threading.Thread(target=start_analysis(True), daemon=False).start(), font=(DefaultFont, DefaultFontSize))
     menu_analysis.add_command(label="SpawnRegularShape生成图形投影", command=lambda : create_structure(f"minecraft:{cn_translate(entry_id.get(),False)}",
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
                                                             (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
-                                                            ), font=(DefaultFont, 10))
-    menu_analysis.add_command(label="FillSpecificBlock替换特定方块", command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"), font=(DefaultFont, 10))
-    menu.add_cascade(label="DataAnalysis数据分析", menu=menu_analysis, font=(DefaultFont, 20))
+                                                            ), font=(DefaultFont, DefaultFontSize))
+    menu_analysis.add_command(label="FillSpecificBlock替换特定方块", command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"), font=(DefaultFont, DefaultFontSize))
+    menu.add_cascade(label="DataAnalysis数据分析", menu=menu_analysis, font=(DefaultFont, int(DefaultFontSize*2.0)))
     menu_AnaSet = tk.Menu(menu, tearoff=0)
-    menu.add_cascade(label="Setting设置",menu=menu_AnaSet, font=(DefaultFont, 20))
-    menu_AnaSet.add_checkbutton(label="DoAnalysisEntity是否分析实体",variable=DoEntity, font=(DefaultFont, 10))
+    menu.add_cascade(label="Setting设置",menu=menu_AnaSet, font=(DefaultFont, int(DefaultFontSize*2.0)))
+    menu_AnaSet.add_checkbutton(label="DoAnalysisEntity是否分析实体",variable=DoEntity, font=(DefaultFont, DefaultFontSize))
     menu_AnaSet.add_separator()
-    menu_AnaSet.add_checkbutton(label="ShowLithemPannel是否显示投影面板",variable=DoLifr,command=lambda:hide(frame_func,DoLifr), font=(DefaultFont, 10))
-    menu_AnaSet.add_checkbutton(label="ShowStatisticsPannel是否显示统计面板",variable=DoStat,command=lambda:hide(frame_data,DoStat), font=(DefaultFont, 10))
-    menu_AnaSet.add_checkbutton(label="ShowAnalysisPannel是否显示分析面板", variable=DoAnal,command=lambda: hide(frame_middle,DoAnal), font=(DefaultFont, 10))
+    menu_AnaSet.add_checkbutton(label="ShowLithemPannel是否显示投影面板",variable=DoLifr,command=lambda:hide(frame_func,DoLifr), font=(DefaultFont, DefaultFontSize))
+    menu_AnaSet.add_checkbutton(label="ShowStatisticsPannel是否显示统计面板",variable=DoStat,command=lambda:hide(frame_data,DoStat), font=(DefaultFont, DefaultFontSize))
+    menu_AnaSet.add_checkbutton(label="ShowAnalysisPannel是否显示分析面板", variable=DoAnal,command=lambda: hide(frame_middle,DoAnal), font=(DefaultFont, DefaultFontSize))
     menu_AnaSet.add_separator()
-    menu_AnaSet.add_checkbutton(label="Allow3DRander是否3D渲染", variable=Do3d, font=(DefaultFont, 10))
-    menu_AnaSet.add_checkbutton(label="Rander3DEmbeddedDisplay3D面板集中显示", variable=Pn3d, font=(DefaultFont, 10))
-    menu_AnaSet.add_checkbutton(label="3DRanderLimit3D渲染限制|num>1000", variable=Li3d, font=(DefaultFont, 10))
-    menu_AnaSet.add_checkbutton(label="Rotate3DRander3D渲染是否旋转", variable=Sp3d, font=(DefaultFont, 10))
+    menu_AnaSet.add_checkbutton(label="Allow3DRander是否3D渲染", variable=Do3d, font=(DefaultFont, DefaultFontSize))
+    menu_AnaSet.add_checkbutton(label="Rander3DEmbeddedDisplay3D面板集中显示", variable=Pn3d, font=(DefaultFont, DefaultFontSize))
+    menu_AnaSet.add_checkbutton(label="3DRanderLimit3D渲染限制|num>1000", variable=Li3d, font=(DefaultFont, DefaultFontSize))
+    menu_AnaSet.add_checkbutton(label="Rotate3DRander3D渲染是否旋转", variable=Sp3d, font=(DefaultFont, DefaultFontSize))
     menu_Func = tk.Menu(menu, tearoff=0)
-    menu.add_cascade(label="Function功能",menu=menu_Func, font=(DefaultFont, 20))
-    menu_Func.add_command(label="HeptaVersual跨版本 1.17+", command=lambda:litVerFix(7), font=(DefaultFont, 10))
-    menu_Func.add_command(label="PentaVersual跨版本 1.15+", command=lambda:litVerFix(5), font=(DefaultFont, 10))
-    menu_Func.add_command(label="TriVersual跨版本 1.13+", command=lambda:litVerFix(4), font=(DefaultFont, 10))
+    menu.add_cascade(label="Function功能",menu=menu_Func, font=(DefaultFont, int(DefaultFontSize*2.0)))
+    menu_Func.add_command(label="HeptaVersual跨版本 1.17+", command=lambda:litVerFix(7), font=(DefaultFont, DefaultFontSize))
+    menu_Func.add_command(label="PentaVersual跨版本 1.15+", command=lambda:litVerFix(5), font=(DefaultFont, DefaultFontSize))
+    menu_Func.add_command(label="TriVersual跨版本 1.13+", command=lambda:litVerFix(4), font=(DefaultFont, DefaultFontSize))
     menu_Func.add_separator()
-    menu_Func.add_command(label="ContainerAnalysis容器分析", command=lambda:ConAly(), font=(DefaultFont, 10))
-    menu_Func.add_command(label="3DRender手动3D渲染", command=lambda: threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start(), font=(DefaultFont, 10))
+    menu_Func.add_command(label="ContainerAnalysis容器分析", command=lambda:ConAly(), font=(DefaultFont, DefaultFontSize))
+    menu_Func.add_command(label="3DRender手动3D渲染", command=lambda: threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start(), font=(DefaultFont, DefaultFontSize))
     menu_Help = tk.Menu(menu, tearoff=0)
-    menu.add_cascade(label="Help帮助",menu=menu_Help, font=(DefaultFont, 20))
-    menu_Help.add_command(label="About关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, 10))
-    menu_Help.add_command(label="AboutCreater关于作者", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), font=(DefaultFont, 10))
-    menu_Help.add_command(label="ManualInstallPackages手动更新软件库", command=manual_install_pk, font=(DefaultFont, 10))
+    menu.add_cascade(label="Help帮助",menu=menu_Help, font=(DefaultFont, int(DefaultFontSize*2.0)))
+    menu_Help.add_command(label="About关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, DefaultFontSize))
+    menu_Help.add_command(label="AboutCreater关于作者", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), font=(DefaultFont, DefaultFontSize))
+    menu_Help.add_command(label="ManualInstallPackages手动更新软件库", command=manual_install_pk, font=(DefaultFont, DefaultFontSize))
     setting = Setting()
-    menu_Help.add_command(label="UIColorMap界面颜色", font=(DefaultFont, 10), command=setting.set_colormap)
+    menu_Help.add_command(label="UIColorMap界面颜色", font=(DefaultFont, DefaultFontSize), command=setting.set_colormap)
+    menu_Help.add_command(label="UIFont界面字体", font=(DefaultFont, DefaultFontSize), command=setting.set_font)
+    menu_Help.add_command(label="UIFontSize字体大小", font=(DefaultFont, DefaultFontSize), command=setting.set_fontsize)
     litem.config(menu=menu, padx=10)
 
     #  顶容器
@@ -489,22 +517,22 @@ if __name__ == "__main__":
     frame_top.configure(bg=color_map["BG"], bd=5)
     frame_top.pack(side=tk.TOP, fill=tk.X)
 
-    btn_import = CTkButton(frame_top, text="Import导入", command=import_file, font=(DefaultFont, 15))
+    btn_import = CTkButton(frame_top, text="Import导入", command=import_file, font=(DefaultFont, DefaultFontSize*1.5))
     btn_import.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_import.pack(side=tk.LEFT, padx=5)
-    btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, 15))
+    btn_simstart = CTkButton(frame_top, text="SIMPLE Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, DefaultFontSize*1.5))
     btn_simstart.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_simstart.pack(side=tk.LEFT, padx=5)
     btn_hint = CTkButton(frame_top, text="!HINT注意事项!",
                              command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用'''),
-                             font=(DefaultFont, 15))
+                             font=(DefaultFont, DefaultFontSize*1.5))
     btn_hint.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
     btn_hint.pack(side=tk.LEFT, padx=5)
 
-    btn_github = CTkButton(frame_top, text="GitHub", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, 15))
+    btn_github = CTkButton(frame_top, text="GitHub", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, DefaultFontSize*1.5))
     btn_github.configure(fg_color="black",text_color="#f8f9fa",corner_radius=DefaultCorner)
     btn_github.pack(side=tk.RIGHT, padx=5)
-    btn_bilibili = CTkButton(frame_top, text="Bilibili", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), font=(DefaultFont, 15))
+    btn_bilibili = CTkButton(frame_top, text="Bilibili", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), font=(DefaultFont, DefaultFontSize*1.5))
     btn_bilibili.configure(fg_color="#FF6699", text_color="#f8f9fa",corner_radius=DefaultCorner)
     btn_bilibili.pack(side=tk.RIGHT, padx=5)
 
@@ -514,80 +542,80 @@ if __name__ == "__main__":
     #  投影创建容器：frame_func_new
     frame_func_new = tk.Frame(frame_func, bg=color_map["MC"])
     frame_func_new.pack(side=tk.TOP, fill=tk.X,  padx=20, pady=20)
-    frame_new_title = tk.Label(frame_func_new, text="生成图形投影", font=(DefaultFont, 18), bg=color_map["MC"], fg=color_map["TT"])
+    frame_new_title = tk.Label(frame_func_new, text="生成图形投影", font=(DefaultFont, int(DefaultFontSize*1.8)), bg=color_map["MC"], fg=color_map["TT"])
     frame_new_title.grid(row=0, column=0, padx=5, pady=5, columnspan=4)
     # -- ID 输入框
-    label_id = tk.Label(frame_func_new, text="方块ID", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"])
+    label_id = tk.Label(frame_func_new, text="方块ID", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"])
     label_id.grid(row=1, column=0, padx=5, pady=5)
-    entry_id = tk.Entry(frame_func_new, width=20, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_id = tk.Entry(frame_func_new, width=20, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_id.grid(row=1, column=1, padx=5, pady=5, columnspan=3)
     # -- XYZ 长宽高输入框
-    label_xyz = tk.Label(frame_func_new, text="原点XYZ", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"])
+    label_xyz = tk.Label(frame_func_new, text="原点XYZ", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"])
     label_xyz.grid(row=2, column=0, padx=5, pady=5)
-    label_lwh = tk.Label(frame_func_new, text="宽高长Size", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"])
+    label_lwh = tk.Label(frame_func_new, text="宽高长Size", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"])
     label_lwh.grid(row=3, column=0, padx=5, pady=5)
-    entry_x = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_x = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_x.grid(row=2, column=1, padx=2, pady=5)
-    entry_y = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_y = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_y.grid(row=2, column=2, padx=2, pady=5)
-    entry_z = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_z = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_z.grid(row=2, column=3, padx=2, pady=5)
-    entry_length = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_length = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_length.grid(row=3, column=3, padx=2, pady=5)
-    entry_width = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_width = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_width.grid(row=3, column=2, padx=2, pady=5)
-    entry_height = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_height = tk.Entry(frame_func_new, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_height.grid(row=3, column=1, padx=2, pady=5)
-    btn_spawn = CTkButton(frame_func_new, text="Spawn生成", font=(DefaultFont, 15, "bold"),
+    btn_spawn = CTkButton(frame_func_new, text="Spawn生成", font=(DefaultFont, DefaultFontSize*1.5, "bold"),
                           command=lambda : create_structure(f"minecraft:{cn_translate(entry_id.get(),False)}",
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
                                                             (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
                                                             ))
     btn_spawn.configure(fg_color=color_map["BG"],text_color=color_map["TT"],corner_radius=DefaultCorner)
     btn_spawn.grid(row=8, column=0, padx=2, pady=2, columnspan=4)
-    label_tip = tk.Label(frame_func_new, text="ID输入可以为纯英文或中文名", font=(DefaultFont, 10, "bold"), bg=color_map["BG"], fg="#f70400")
+    label_tip = tk.Label(frame_func_new, text="ID输入可以为纯英文或中文名", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400")
     label_tip.grid(row=9, column=0, padx=5, pady=5, columnspan=4)
     #  方块替换容器：frame_func_change
     frame_func_change = tk.Frame(frame_func, bg=color_map["MC"])
     frame_func_change.pack(side=tk.TOP, fill=tk.X, pady=20, padx=20)
-    frame_change_title = tk.Label(frame_func_change, text="替换特定方块", font=(DefaultFont, 18), bg=color_map["MC"],fg=color_map["TT"])
+    frame_change_title = tk.Label(frame_func_change, text="替换特定方块", font=(DefaultFont, int(DefaultFontSize*1.8)), bg=color_map["MC"],fg=color_map["TT"])
     frame_change_title.grid(row=0, column=0, padx=5, pady=20, columnspan=4)
 
     # -- Limit 标签和 XYZ 输入框
-    label_min = tk.Label(frame_func_change, text="最小限制\nMinimize\nLimit XYZ", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"])
+    label_min = tk.Label(frame_func_change, text="最小限制\nMinimize\nLimit XYZ", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"])
     label_min.grid(row=1, column=0, padx=5, pady=5)
-    entry_min_x = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_min_x = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_min_x.grid(row=1, column=1, padx=2, pady=5)
-    entry_min_y = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_min_y = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_min_y.grid(row=1, column=2, padx=2, pady=5)
-    entry_min_z = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_min_z = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_min_z.grid(row=1, column=3, padx=2, pady=5)
-    label_max = tk.Label(frame_func_change, text="最大限制\nMaximize\nLimit XYZ", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"])
+    label_max = tk.Label(frame_func_change, text="最大限制\nMaximize\nLimit XYZ", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"])
     label_max.grid(row=2, column=0, padx=5, pady=5)
-    entry_max_x = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_max_x = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_max_x.grid(row=2, column=1, padx=2, pady=5)
-    entry_max_y = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_max_y = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_max_y.grid(row=2, column=2, padx=2, pady=5)
-    entry_max_z = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    entry_max_z = tk.Entry(frame_func_change, width=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_max_z.grid(row=2, column=3, padx=2, pady=5)
 
     # -- Change 标签和多行输入框
-    tk.Label(frame_func_change, text="替换表\nChange", font=(DefaultFont, 12), bg=color_map["MC"], fg=color_map["TT"]).grid(row=3, column=0, padx=5, pady=5)
-    text_change = tk.Text(frame_func_change,width=20, height=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, 10))
+    tk.Label(frame_func_change, text="替换表\nChange", font=(DefaultFont, int(DefaultFontSize*1.2)), bg=color_map["MC"], fg=color_map["TT"]).grid(row=3, column=0, padx=5, pady=5)
+    text_change = tk.Text(frame_func_change,width=20, height=5, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     text_change.grid(row=3, column=1, columnspan=3, padx=5, pady=5)
 
-    btn_spawn2 = CTkButton(frame_func_change, text="Spawn生成", font=(DefaultFont, 15, "bold"), command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
+    btn_spawn2 = CTkButton(frame_func_change, text="Spawn生成", font=(DefaultFont, DefaultFontSize*1.5, "bold"), command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
     btn_spawn2.configure(fg_color=color_map["BG"],text_color=color_map["TT"],corner_radius=DefaultCorner)
     btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=4)
-    tk.Label(frame_func_change, text="替换表= 旧方块-新方块,...", font=(DefaultFont, 10, "bold"), bg=color_map["BG"], fg="#f70400").grid(row=6, column=0, padx=5, pady=5, columnspan=4)
+    tk.Label(frame_func_change, text="替换表= 旧方块-新方块,...", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400").grid(row=6, column=0, padx=5, pady=5, columnspan=4)
     # -- 分析设置
     frame_Output = CTkScrollableFrame(frame_func, fg_color=color_map["BG"], corner_radius=DefaultCorner)
     frame_Output.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=20, pady=20)
-    CTkLabel(frame_Output, text="分析设置", font=(DefaultFont, 20, "bold"), fg_color=color_map["BG"], text_color=color_map["TT"]).pack(side=tk.TOP, fill=tk.BOTH, padx=10, pady=10)
+    CTkLabel(frame_Output, text="分析设置", font=(DefaultFont, int(DefaultFontSize*2.0), "bold"), fg_color=color_map["BG"], text_color=color_map["TT"]).pack(side=tk.TOP, fill=tk.BOTH, padx=10, pady=10)
     frame_times = tk.Frame(frame_Output, bg=color_map["BG"])
     frame_times.pack(side=tk.TOP, fill=tk.BOTH, padx=10, pady=5)
-    tk.Label(frame_times, text="Times倍数", font=("SimHei", 16),bg=color_map["BG"], fg=color_map["TT"]).pack(side=tk.LEFT, padx=5)
-    entry_times = tk.Entry(frame_times, width=10, bg=color_map["BG"], fg=color_map["PC"], font=("Helvetica", 10))
+    tk.Label(frame_times, text="Times倍数", font=(DefaultFont, int(DefaultFontSize*1.6)),bg=color_map["BG"], fg=color_map["TT"]).pack(side=tk.LEFT, padx=5)
+    entry_times = tk.Entry(frame_times, width=10, bg=color_map["BG"], fg=color_map["PC"], font=(DefaultFont, DefaultFontSize))
     entry_times.pack(side=tk.RIGHT, padx=5)
 
     #  中分析容器
@@ -596,10 +624,10 @@ if __name__ == "__main__":
     # - 标题容器
     frame_middle_top = CTkFrame(frame_middle, fg_color=color_map["BG"], corner_radius=DefaultCorner)
     frame_middle_top.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
-    label_middle = tk.Label(frame_middle_top, text="LitematicaViewer投影查看器", font=("Helvetica", 30, 'bold'))
+    label_middle = tk.Label(frame_middle_top, text="LitematicaViewer投影查看器", font=(DefaultFont, DefaultFontSize*3, 'bold'))
     label_middle.configure(bg=color_map["BG"], fg=color_map["TT"], bd=5)
     label_middle.pack(fill=tk.Y)
-    label_bottom = tk.Label(frame_middle_top, text="Size体积 | Number数量 | Times倍数 | Types种类", font=("Helvetica", 14, "bold"))
+    label_bottom = tk.Label(frame_middle_top, text="Size体积 | Number数量 | Times倍数 | Types种类", font=(DefaultFont, int(DefaultFontSize*1.4), "bold"))
     label_bottom.configure(bg=color_map["BG"], fg=color_map["PC"], bd=5)
     label_bottom.pack(side=tk.LEFT, fill=tk.X, padx=20, pady=10)
     
@@ -621,8 +649,8 @@ if __name__ == "__main__":
     canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     table_sty = ttk.Style()
-    table_sty.configure("Treeview", font=(DefaultFont, 12), rowheight=25, background=color_map["PC"], foreground=color_map["BG"])
-    table_sty.configure("Treeview.Heading", font=("Helvetica", 14, "bold"), background=color_map["PC"], foreground=color_map["MC"])
+    table_sty.configure("Treeview", font=(DefaultFont, int(DefaultFontSize*1.2)), rowheight=25, background=color_map["PC"], foreground=color_map["BG"])
+    table_sty.configure("Treeview.Heading", font=(DefaultFont, int(DefaultFontSize*1.4), "bold"), background=color_map["PC"], foreground=color_map["MC"])
     table_sty.map('Treeview', background=[('selected', color_map["MC"])])
     # 中容器表格
     frame_chart = tk.Frame(frame_middle, bg=color_map["TT"], background=color_map["MC"])
@@ -665,17 +693,17 @@ if __name__ == "__main__":
     stat_liq.pack(fill=tk.BOTH, side=tk.TOP, padx=5, pady=5)
     stat_den = CTkFrame(frame_stati2, fg_color=color_map["PC"])
     stat_den.pack(fill=tk.BOTH, side=tk.TOP, padx=5, pady=5)
-    tk.Label(stat_red, text="红石偏度", font=(DefaultFont, 16, "bold"), bg=color_map["PC"],fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
-    tk.Label(stat_redt, text="材质", font=(DefaultFont, 16, "bold"), bg=color_map["PC"], fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
-    tk.Label(stat_liq, text="液体偏度", font=(DefaultFont, 16, "bold"), bg=color_map["PC"],fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
-    tk.Label(stat_den, text="密度", font=(DefaultFont, 16, "bold"), bg=color_map["PC"], fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
-    a_red = tk.Label(stat_red, text="0", font=(DefaultFont, 16), bg=color_map["PC"], fg=color_map["MC"])
+    tk.Label(stat_red, text="红石偏度", font=(DefaultFont, int(DefaultFontSize*1.6), "bold"), bg=color_map["PC"],fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
+    tk.Label(stat_redt, text="材质", font=(DefaultFont, int(DefaultFontSize*1.6), "bold"), bg=color_map["PC"], fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
+    tk.Label(stat_liq, text="液体偏度", font=(DefaultFont, int(DefaultFontSize*1.6), "bold"), bg=color_map["PC"],fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
+    tk.Label(stat_den, text="密度", font=(DefaultFont, int(DefaultFontSize*1.6), "bold"), bg=color_map["PC"], fg=color_map["BG"]).pack(fill=tk.X, side=tk.LEFT, padx=5, pady=5)
+    a_red = tk.Label(stat_red, text="0", font=(DefaultFont, int(DefaultFontSize*1.6)), bg=color_map["PC"], fg=color_map["MC"])
     a_red.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
-    a_redt = tk.Label(stat_redt, text="0", font=(DefaultFont, 16), bg=color_map["PC"], fg=color_map["MC"])
+    a_redt = tk.Label(stat_redt, text="0", font=(DefaultFont, int(DefaultFontSize*1.6)), bg=color_map["PC"], fg=color_map["MC"])
     a_redt.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
-    a_liq = tk.Label(stat_liq, text="0", font=(DefaultFont, 16), bg=color_map["PC"], fg=color_map["MC"])
+    a_liq = tk.Label(stat_liq, text="0", font=(DefaultFont, int(DefaultFontSize*1.6)), bg=color_map["PC"], fg=color_map["MC"])
     a_liq.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
-    a_den = tk.Label(stat_den, text="0", font=(DefaultFont, 16), bg=color_map["PC"], fg=color_map["MC"])
+    a_den = tk.Label(stat_den, text="0", font=(DefaultFont, int(DefaultFontSize*1.6)), bg=color_map["PC"], fg=color_map["MC"])
     a_den.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
 
     litem.mainloop()
