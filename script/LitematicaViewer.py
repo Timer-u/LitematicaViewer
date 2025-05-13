@@ -19,10 +19,12 @@ try:
     from script.LitRender import OpenGLView, main_render_loop
     from script.Litmatool import *
     from script.Structure import *
+    from script.LitRenderTexture import LitStepChecker
 except:
     from LitRender import OpenGLView, main_render_loop
     from Litmatool import *
     from Structure import *
+    from LitRenderTexture import LitStepChecker
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -48,7 +50,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.7.2'
+APP_VERSION = '0.7.4'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -336,10 +338,10 @@ def start_analysis():
                     block_state = region._Region__palette[region._Region__blocks[x, y, z]]
                     block_id = block_state._BlockState__block_id
                     block_property = block_state._BlockState__properties
-                    if block_id not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
-                        Block_pos.append([[x, y, z], str(block_id)])
+                    output = block_id
+                    if output not in ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]:
                         num += 1
-                        if block_id not in ["minecraft:piston_head",
+                        if output not in ["minecraft:piston_head",
                                             "minecraft:nether_portal", "minecraft:moving_piston",
                                             "minecraft:bedrock"]:
                             MBB = ["potted_", "_cake", "wall_", "_cauldron"] #组合逆天方块
@@ -357,7 +359,6 @@ def start_analysis():
                                          ('pickles', '', "minecraft:sea_pickle", 0),
                                          ('charges', '', "minecraft:glowstone", 0),
                                          ('flower_amount', '', "minecraft:pink_petals", 0)]
-                            output = block_id
                             # 简单转换方块
                             for a in Analysis:
                                 output = Analysis[a] if block_id == a else block_id
@@ -372,12 +373,16 @@ def start_analysis():
                                     if block_property[pt] == pv or not pv:
                                         if not pf:
                                             Block[output] = Block[output]+pn if output in Block else pn
+                                            Block_pos.append([[x, y, z], str(output)])
                                         elif pf not in Block:
                                             Block[pf] = pn
+                                            Block_pos.append([[x, y, z], str(pf)])
                                         else:
                                             Block[pf] = Block[pf]+pn
+                                            Block_pos.append([[x, y, z], str(pf)])
                                         continue
                             Block[output] = Block[output]+1 if output in Block else 1
+                        Block_pos.append([[x, y, z], str(output)])
 
         if DoEntity.get():
             for entity in region._Region__entities:
@@ -411,6 +416,7 @@ def start_analysis():
         else:
             Cla_Block["其他"].append((Block[val], val))
     print(f"{Cla_Block}")
+    print(Block_pos)
     label_bottom.config(
         text=f"Size体积: {size_x}x{size_y}x{size_z} | Number数量: {num} | Times倍数: {time} | Types种类: {len(Block)}")
 
@@ -438,7 +444,7 @@ def start_analysis():
     a_auth.config(text=SCauthor)
     a_ver.config(text=SCver)
     a_desc.config(text=SCdesc)
-    analysis_debug.config(text=f"Analysis DEBUG: {SCblock==num}")
+    analysis_debug.config(text=f"Analysis DEBUG: {str(SCblock==num)}")
     for index, (block_state, count) in enumerate(sorted_block):
         try:
             count = count * int(entry_times.get())
@@ -469,6 +475,9 @@ def start_analysis():
             else:
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
     litem.update_idletasks()
+
+def LSC():
+    lsc = LitStepChecker(Block_pos)
 
 if __name__ == "__main__":
     #  主窗口
@@ -554,6 +563,7 @@ if __name__ == "__main__":
     menu_Func.add_separator()
     menu_Func.add_command(label="容器分析", command=lambda:ConAly(), font=(DefaultFont, DefaultFontSize))
     menu_Func.add_command(label="手动3D渲染", command=lambda: threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start(), font=(DefaultFont, DefaultFontSize))
+    menu_Func.add_command(label="投影步骤查看器", command=lambda: LSC(), font=(DefaultFont, DefaultFontSize))
     menu_Help = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="帮助",menu=menu_Help, font=(DefaultFont, int(DefaultFontSize*2.0)))
     menu_Help.add_command(label="关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, DefaultFontSize))
@@ -572,6 +582,9 @@ if __name__ == "__main__":
     btn_simstart = CTkButton(frame_top, text="Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, DefaultFontSize*1.5))
     btn_simstart.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_simstart.pack(side=tk.LEFT, padx=5)
+    btn_litstepchecker = CTkButton(frame_top, text="StepChecker步骤查看器", command=lambda: LSC(), font=(DefaultFont, int(DefaultFontSize*1.5)))
+    btn_litstepchecker.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
+    btn_litstepchecker.pack(side=tk.LEFT, padx=5)
     btn_hint = CTkButton(frame_top, text="!HINT注意事项!",
                              command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用'''),
                              font=(DefaultFont, DefaultFontSize*1.5))
@@ -668,9 +681,9 @@ if __name__ == "__main__":
     entry_times.pack(side=tk.RIGHT, padx=5)
     frame_debug = tk.Frame(frame_Output, bg=color_map["BG"])
     frame_debug.pack(side=tk.TOP, fill=tk.BOTH, padx=10, pady=10)
-    analysis_debug = tk.Label(frame_debug, text="分析DEBUG: True", bg=color_map["BG"], font=(DefaultFont, int(DefaultFontSize*1.5)))
+    analysis_debug = tk.Label(frame_debug, text="分析DEBUG: True", bg=color_map["BG"], fg=color_map["TT"], font=(DefaultFont, int(DefaultFontSize*1.5)))
     analysis_debug.pack(side=tk.TOP, padx=10)
-    CTkLabel(frame_debug, text="如debug为false为分析有误 请勿使用!", font=(DefaultFont, int(DefaultFontSize), "bold"), fg_color=color_map["BG"], text_color="#f70400").pack(side=tk.TOP, fill=tk.BOTH, padx=10)
+    CTkLabel(frame_debug, text="debug为false为分析有误请勿使用", font=(DefaultFont, int(DefaultFontSize*1.2), "bold"), fg_color=color_map["BG"], text_color="#f70400").pack(side=tk.TOP, fill=tk.BOTH, padx=10)
 
     #  中分析容器
     frame_middle = CTkFrame(litem, fg_color=color_map["MC"], corner_radius=DefaultCorner)

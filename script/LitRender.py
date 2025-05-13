@@ -2,7 +2,7 @@ import json, os
 import tkinter as tk
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from PIL import Image
+from PIL import Image, ImageTk
 import numpy as np
 from collections import Counter
 from pyopengltk import OpenGLFrame
@@ -125,27 +125,12 @@ def render_world(blocks, rotation_angle):
                 s = (True,True,not fu,False,True,True)
                 draw_cube((x,y,z), color,s,mode)
 
-'''def fcid(input_id) -> tuple:
-    """
-    通过输入的ID查找对应的颜色键
-    :param input_id: 输入的ID（如 'minecraft:blackstone'）
-    :return: 对应的颜色键，如果未找到则返回 None
-    """
-    color_data=json.load(open(grs(os.path.join('lang', 'zh_cn.json')),'r',encoding="UTF-8"))
-    item_name = input_id.split(":")[1]  # 提取物品名称部分
-    for color, items in color_data["Color"].items():
-        for item in item_name.split("_"):
-            if item in items:  # 检查物品名称是否包含在某个颜色对应的物品中
-                return (int(color[0:2], 16)/255.0,int(color[2:4], 16)/255.0,int(color[4:6], 16)/255.0)
-    return (0.2,0.2,0.2)'''
-
 def init_opengl(display):
     glEnable(GL_DEPTH_TEST)  # 启用深度测试
     glClearColor(int(color_map["MC"][1:3], 16)/255.0, int(color_map["MC"][3:5], 16)/255.0, int(color_map["MC"][5:7], 16)/255.0, 1.0)  # 设置背景颜色
     glMatrixMode(GL_PROJECTION)
     gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)  # 设置透视投影
     glMatrixMode(GL_MODELVIEW)
-
 
 class OpenGLView(OpenGLFrame):
     def __init__(self, parent, blocks, rotate=True, **kwargs):
@@ -205,7 +190,6 @@ class OpenGLView(OpenGLFrame):
         self.set_projection()
         self.tkSwapBuffers()
 
-
 def main_render_loop(blocks, rotate):
     rootr = tk.Tk()
     rootr.title("OpenGL Render")
@@ -214,6 +198,8 @@ def main_render_loop(blocks, rotate):
     gl_view.pack(fill=tk.BOTH, expand=True)
     gl_view.after(2000, gl_view.redraw)
     rootr.mainloop()
+
+
 
 
 if __name__ == "__main__":
