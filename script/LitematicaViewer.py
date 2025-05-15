@@ -7,7 +7,7 @@ from tkinter import ttk, font, filedialog
 from PIL.ImageOps import expand
 from customtkinter import *
 from litemapy import Schematic, BlockState
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageEnhance
 from easygui import boolbox,choicebox,msgbox,enterbox
 from xonsh.completers.tools import justify
 
@@ -19,12 +19,10 @@ try:
     from script.LitRender import OpenGLView, main_render_loop
     from script.Litmatool import *
     from script.Structure import *
-    from script.LitRenderTexture import LitStepChecker
 except:
     from LitRender import OpenGLView, main_render_loop
     from Litmatool import *
     from Structure import *
-    from LitRenderTexture import LitStepChecker
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -50,7 +48,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.7.4'
+APP_VERSION = '0.7.5'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -61,10 +59,6 @@ Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃"
                      "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                      "粘土类": [], "红石":[], "铁类":[], "容器":[], "液体":[], "其他": []}
 images = {}
-
-if not os.path.exists(grs("history.json")):
-    with open(grs("history.json"), "w") as file:
-        file.write("{}")
 
 class Setting:
     def __init__(self):
@@ -116,20 +110,230 @@ class Setting:
             exit()
 
 def on_exit():
-    with open(grs('log.txt'), "w") as file:
-        fw = ""
-        for logvar in LogVar:
-            fw += str(globals()[logvar].get())
-        print(f"Log Rewrite:{fw}")
-        file.write(fw)
+    fw = ""
+    for logvar in LogVar:
+        fw += str(globals()[logvar].get())
+    print(f"Log Rewrite:{fw}")
+    data["Save"]["Basic"] = fw
+    with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
+        json.dump(data, js, indent=2)
 atexit.register(on_exit) #退出绑定
 
 def ConAly():
     try:
-        from script.LitContainer import LitConImport
+        from script.LitContainer import LitCon
     except:
-        from LitContainer import LitConImport
-    threading.Thread(target=LitConImport, daemon=True).start()
+        from LitContainer import LitCon
+    threading.Thread(target=LitCon, daemon=True).start()
+
+def StepOpen():
+    threading.Thread(target=LitStepChecker, daemon=True).start()
+
+class LitStepChecker:
+    def __init__(self):
+        global Block_pos
+        self.xl = max([x for (x, _, _), _, _ in Block_pos]) + 1
+        self.yl = max([y for (_, y, _), _, _ in Block_pos]) + 1
+        self.zl = max([z for (_, _, z), _, _ in Block_pos]) + 1
+        print((self.xl, self.yl, self.zl))
+        self.pos_blocks = [[[(None,None)] * (self.zl) for _ in range(self.yl)] for _ in range(self.xl)]
+        for position, block_id, block_prop in Block_pos:
+            x, y, z = position
+            self.pos_blocks[x][y][z] = (block_id, block_prop)
+        print(self.pos_blocks)
+
+        self.cy = 0
+        self.md = 2
+        self.blockSide = 20
+        self.side = 50
+        self.images = {}
+        self.imagesp = {}
+        self.select_image = ""
+        self.select_old = (0,0)
+        #self.propMap = {"face":["attached","axis", "face", "facing", "hanging", "orientation", "part", "rotation", "shape"],"state":["bites", "candles", "charges", "delay", "eggs", "flower_amount", "note", "inverted", "layers", "level", "mode", "open", "pickles", "signal_fire", "type", "vertical_direction", "half"],"other":["waterlogged", "powered"]}
+
+        self.LS = tk.Toplevel(litem)
+        self.LS.title("Litematica Step Checker")
+        self.LS.iconbitmap(grs("icon.ico"))
+        self.LS.geometry("800x800")
+        self.LS.configure(bg=color_map["BG"])
+        self.frame = tk.Frame(self.LS, bg=color_map["BG"])
+        self.frame.pack(side=tk.TOP)
+        self.button_sup = tk.Button(self.frame, text="⇈", command=lambda: self.change_y("sup"))
+        self.button_sup.grid(row=0, column=0, padx=2, pady=5)
+        self.button_up = tk.Button(self.frame, text="↑", command=lambda: self.change_y("up"))
+        self.button_up.grid(row=0, column=1, padx=2, pady=5)
+        self.button_down = tk.Button(self.frame, text="↓", command=lambda: self.change_y("down"))
+        self.button_down.grid(row=0, column=2, padx=2, pady=5)
+        self.button_sdown = tk.Button(self.frame, text="⇊", command=lambda: self.change_y("sdown"))
+        self.button_sdown.grid(row=0, column=3, padx=2, pady=5)
+        self.ck = tk.IntVar(value=1)
+        self.checkbutton = tk.Checkbutton(self.frame, text="BEHIND", variable=self.ck)
+        self.checkbutton.grid(row=0, column=4, padx=2, pady=5)
+        self.button_re = tk.Button(self.frame, text="Redo", command=lambda: self.update_canvas())
+        self.button_re.grid(row=0, column=5, padx=2, pady=5)
+        self.label_y = tk.Label(self.frame, text="Y=0")
+        self.label_y.grid(row=0, column=6, padx=2, pady=5)
+        self.label_prop = tk.Label(self.frame, text="属性:None")
+        self.label_prop.grid(row=1, column=0, padx=2, pady=5, columnspan = 6)
+
+        self.frame2 = tk.Frame(self.LS, bg=color_map["BG"])
+        self.frame2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self.frame2, bg=color_map["MC"])
+        #self.scroll_x = ttk.Scrollbar(self.frame2, orient="horizontal", command=self.canvas.xview)
+        #self.scroll_y = ttk.Scrollbar(self.frame2, orient="vertical", command=self.canvas.yview)
+        #self.scroll_x.pack(side=tk.BOTTOM, fill=tk.X)
+        #self.scroll_y.pack(side=tk.LEFT, fill=tk.Y)
+        #self.canvas.configure(xscrollcommand=self.scroll_x.set, yscrollcommand=self.scroll_y.set)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.bind("<Motion>", self.block_prop_update)
+        #self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(-e.delta // 120, "units"))
+        #self.canvas.bind_all("<Shift-MouseWheel>", lambda e: self.canvas.xview_scroll(-e.delta // 120, "units"))
+        #self.frame2.grid_rowconfigure(0, weight=1)
+        #self.frame2.grid_columnconfigure(0, weight=1)
+
+        self.update_canvas()
+
+    def block_prop_update(self, event):
+        i = (event.x - self.side - (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 )/ self.blockSide
+        j = (event.y - self.side - (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 )/ self.blockSide
+        if (int(i),int(j)) == self.select_old: return
+        self.select_old=(int(i),int(j))
+        block_id = self.pos_blocks[int(i)][self.cy][int(j)][0]
+        if not block_id: return
+        print((int(i),int(j)))
+        self.label_prop.config(text=f"{cn_translate(id_tran_name(block_id))}|属性:{self.pos_blocks[int(i)][self.cy][int(j)][1]}")
+        image = Image.open(grs(os.path.join('item', 'block_selected.png')))
+        image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
+        self.photo = ImageTk.PhotoImage(image)
+        self.select_image = self.photo
+        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide, anchor="nw", image=self.photo)
+
+    def update_canvas(self):
+        Scwidth = min(self.LS.winfo_width(), self.LS.winfo_height())
+        Stuwidth = max(self.xl, self.zl)
+        print((self.LS.winfo_width(), self.LS.winfo_height()))
+        self.images = {}
+        self.imagesp = {}
+        self.canvas.delete("all")
+        self.blockSide = int((Scwidth - self.side*2) / Stuwidth)
+        if self.cy > 0 and self.ck.get():
+            self.draw_previous_layer()
+        self.draw_current_layer()
+        self.draw_line()
+
+    def draw_line(self):
+        self.canvas.create_line(self.side, self.side, self.LS.winfo_width() - self.side, self.side, fill=color_map["PC"],
+                                arrow="last", width=4)
+        self.canvas.create_line(self.side, self.side, self.side, self.LS.winfo_height() - self.side, fill=color_map["PC"],
+                                arrow="last", width=4)
+        self.canvas.create_text(self.side-5, self.side-5, fill=color_map["PC"], text="Z/X", anchor=tk.SE,
+                                font=(DefaultFont, int(DefaultFontSize * 1.5)))
+        for i in range(self.xl+1):
+            pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
+            self.canvas.create_line(pos_x, self.side, pos_x, int(self.side*0.75), fill=color_map["PC"], width=2)
+            self.canvas.create_text(pos_x, int(self.side/2), fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, int(self.blockSide * 0.5)))
+
+        for j in range(self.zl+1):
+            pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
+            self.canvas.create_line(self.side, pos_y, int(self.side*0.75), pos_y, fill=color_map["PC"], width=2)
+            self.canvas.create_text(int(self.side/2), pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, int(self.blockSide * 0.5)))
+
+    def draw_previous_layer(self):
+        for i in range(self.xl):
+            for j in range(self.zl):
+                if self.xl * self.blockSide + self.side != self.LS.winfo_width():
+                    pos_x = self.side + (
+                            self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
+                else:
+                    pos_x = i * self.blockSide + self.side
+                if self.zl * self.blockSide + self.side != self.LS.winfo_height():
+                    pos_y = self.side + (
+                            self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
+                else:
+                    pos_y = j * self.blockSide + self.side
+                bid, bprop = self.pos_blocks[i][self.cy - 1][j]
+                if not bid:
+                    continue
+                self.photo = None
+                try:
+                    image = Image.open(grs(os.path.join('block', f"{id_tran_name(bid)}.png")))
+                    image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
+                    image = ImageEnhance.Brightness(image).enhance(0.7)
+                    new_alpha = Image.new('L', image.size, 64)
+                    r,g,b,a = image.split()
+                    mask = a.point(lambda x: 255 if x > 0 else 0)
+                    image = Image.merge("RGBA", (r, g, b, Image.composite(a, new_alpha, mask)))
+                    self.photo = ImageTk.PhotoImage(image)
+                    self.imagesp[f"p{i}{j}"]=self.photo
+                    self.canvas.create_image(pos_x, pos_y, anchor="nw", image=self.photo)
+                    #print(f"PreBehind layer: {(i, j)}|{bid}|{(pos_x,pos_y)}")
+                except:
+                    image = Image.open(grs(os.path.join('block', 'info_update.png')))
+                    image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
+                    image = ImageEnhance.Brightness(image).enhance(0.7)
+                    image.putalpha(Image.new('L', image.size, 64))
+                    self.photo = ImageTk.PhotoImage(image)
+                    self.imagesp[f"p{i}{j}"]=self.photo
+                    self.canvas.create_image(pos_x, pos_y, anchor="nw", image=self.photo)
+            litem.update_idletasks()
+            #print(images)
+
+
+    def draw_current_layer(self):
+        textrender = []
+        for i in range(self.xl):
+            for j in range(self.zl):
+                if self.xl * self.blockSide + self.side != self.LS.winfo_width():
+                    pos_x = self.side + (
+                            self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
+                else:
+                    pos_x = i * self.blockSide + self.side
+                if self.zl * self.blockSide + self.side != self.LS.winfo_height():
+                    pos_y = self.side + (
+                            self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
+                else:
+                    pos_y = j * self.blockSide + self.side
+                bid, bprop = self.pos_blocks[i][self.cy][j]
+                if not bid:
+                    continue
+                self.photo = None
+                try:
+                    image = Image.open(grs(os.path.join('block', f"{id_tran_name(bid)}.png")))
+                    image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.NEAREST)
+                    if self.ck.get():
+                        image.putalpha(Image.new('L', image.size, 234))
+                    self.photo = ImageTk.PhotoImage(image)
+                    self.images[f"c{i}{j}"]=self.photo
+                    self.canvas.create_image(pos_x, pos_y, anchor=tk.NW, image=self.photo)
+                    #print(f"Current layer: {(i, j)}|{bid}")
+                except Exception as e:
+                    print(e)
+                    # 加载备用图片
+                    image = Image.open(grs(os.path.join('block', 'info_update.png')))
+                    image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.NEAREST)
+                    self.photo = ImageTk.PhotoImage(image)
+                    self.images[f"c{i}{j}"]=self.photo
+                    self.canvas.create_image(pos_x, pos_y, anchor=tk.NW, image=self.photo)
+                    textrender.append((pos_x,pos_y,cn_translate(id_tran_name(bid))))
+            for x,y,t in textrender:
+                self.canvas.create_text(x, y,text=t,anchor=tk.NW, font=(DefaultFont, int(self.blockSide*0.5)), fill="#f70400")
+            litem.update_idletasks()
+
+
+    def change_y(self,direction):
+        if direction == "up" and self.cy < self.yl-1:
+            self.cy += 1
+        elif direction == "down" and self.cy > 0:
+            self.cy -= 1
+        elif direction == "sup" and self.cy < self.yl-11:
+            self.cy += 10
+        elif direction == "sdown" and self.cy > 10:
+            self.cy -= 10
+        print(self.cy)
+        self.label_y.config(text=f"Y={self.cy}")
+        self.update_canvas()
+        litem.update_idletasks()
 
 def litVerFix(version: int) -> None:
     #["v7 1.20.6+", "v6 1.14~1.20.5", "v3 1.12/1.13"]
@@ -293,14 +497,13 @@ def Draw_Chart():
     canvas2.draw()
     return sorted_block[:1]
 
-
 def start_analysis():
     global schematic, Cla_Block, Block_pos, gl_view, Block
-    historyFile = json.load(open(grs("history.json"), 'r', encoding='utf-8'))
-    print(f"HistoryFile loaded: {historyFile}")
     print(file_path)
     if not file_path:
         import_file()
+    else:
+        label_middle.config(text=f"{file_path.split("\\")[-1]}")
     Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
                  "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                  "粘土类": [], "红石": [], "铁类": [], "容器": [], "液体": [], "其他": []}
@@ -323,9 +526,7 @@ def start_analysis():
         SCver = "1.20.6+"
     else:
         SCver = "1.12+"
-    #if str(schematic) not in historyFile:
     num = 0
-    acnum = 0
     print(f"--Schematic loaded: {schematic}|Name:{SCname}|Author:{SCauthor}|Description:{SCdesc}|Version:{SCver}|")
     for region_index, region in enumerate(schematic.regions.values()):
         print(f"--Analyzing region {region_index + 1}")
@@ -373,16 +574,16 @@ def start_analysis():
                                     if block_property[pt] == pv or not pv:
                                         if not pf:
                                             Block[output] = Block[output]+pn if output in Block else pn
-                                            Block_pos.append([[x, y, z], str(output)])
+                                            Block_pos.append([[x, y, z], str(output), block_property])
                                         elif pf not in Block:
                                             Block[pf] = pn
-                                            Block_pos.append([[x, y, z], str(pf)])
+                                            Block_pos.append([[x, y, z], str(pf), block_property])
                                         else:
                                             Block[pf] = Block[pf]+pn
-                                            Block_pos.append([[x, y, z], str(pf)])
+                                            Block_pos.append([[x, y, z], str(pf), block_property])
                                         continue
                             Block[output] = Block[output]+1 if output in Block else 1
-                        Block_pos.append([[x, y, z], str(output)])
+                        Block_pos.append([[x, y, z], str(output), block_property])
 
         if DoEntity.get():
             for entity in region._Region__entities:
@@ -393,17 +594,6 @@ def start_analysis():
                         Block[entity_type] = 1
                     else:
                         Block[entity_type] += 1
-        '''historyFile[str(schematic)] = [Block, Block_pos, [size_x, size_y, size_z, num]]
-        print(historyFile)
-        with open("history.json", 'w') as jh:
-            json.dump(historyFile, jh, indent=4)
-            print(f"History File saved with {str(schematic)}")'''
-
-    '''else:
-        print(f"Find History File with {str(schematic)}")
-        Block = historyFile[str(schematic)][0]
-        Block_pos = historyFile[str(schematic)][1]
-        size_x,size_y,size_z,num=historyFile[str(schematic)][2]'''
 
     time = 1 if entry_times.get() == "" else int(entry_times.get())
     for val in Block:
@@ -444,13 +634,18 @@ def start_analysis():
     a_auth.config(text=SCauthor)
     a_ver.config(text=SCver)
     a_desc.config(text=SCdesc)
-    analysis_debug.config(text=f"Analysis DEBUG: {str(SCblock==num)}")
+    deb = (SCblock==num)
+    analysis_debug.config(text=f"Analysis DEBUG: {str(deb)}")
     for index, (block_state, count) in enumerate(sorted_block):
         try:
             count = count * int(entry_times.get())
         except:
             count = count * 1
         insert_table(block_state, count)
+    with open(grs('log.txt'), 'w', encoding='utf-8') as file:
+        file.write(os.path.normpath(file_path))
+        print("new file saved")
+    litem.update_idletasks()
 
     if Do3d.get():
         if Pn3d.get():
@@ -474,10 +669,7 @@ def start_analysis():
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start()
             else:
                 threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(Sp3d.get())), daemon=True).start()
-    litem.update_idletasks()
 
-def LSC():
-    lsc = LitStepChecker(Block_pos)
 
 if __name__ == "__main__":
     #  主窗口
@@ -488,9 +680,10 @@ if __name__ == "__main__":
     litem.configure(bg=color_map["BG"])
 
     if data["Save"]["First_open"] == "0":
-        msgbox('''LitematicaViewer投影查看器V0.7.2更新报告Log
-        1. 更新界面主题颜色 帮助-界面颜色更改主题色
-        2. 修改分析BUG 特殊方块将正常分析 (门,海龟蛋,土径...)''')
+        msgbox('''LitematicaViewer投影查看器V0.7.5更新报告Log
+        1. 更新 平面投影步骤查看器 (可查看每一层的方块渲染,包含纹理和属性)
+        2. 主界面添加 常用功能按钮
+        3. 添加 投影分析正确性检测 (主界面右下角的DEBUG)''')
         data["Save"]["First_open"] = "1"
         with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
             json.dump(data, js, indent=2)
@@ -505,23 +698,16 @@ if __name__ == "__main__":
     Pn3d = tk.IntVar()
     Li3d = tk.IntVar()
     Sp3d = tk.IntVar()
-    if not os.path.exists(grs("log.txt")):
-        with open(grs("log.txt"), "w") as file:
-            file.write("11111111")  # d1:Entity, d2-4:Frame, d5-8:3D
-            for logvar in LogVar:
-                globals()[logvar] = tk.IntVar(value=1)
-    else:
-        with open(grs("log.txt"), "r") as file:
-            fr = file.read()
-            try:
-                logvan = 0
-                for logvar in LogVar:
-                    globals()[logvar] = tk.IntVar(value=int(fr[logvan]))
-                    logvan+=1
 
-            except:
-                for logvar in LogVar:
-                    globals()[logvar] = tk.IntVar(value=1)
+    Basic = data["Save"]["Basic"]
+    try:
+        logvan = 0
+        for logvar in LogVar:
+            globals()[logvar] = tk.IntVar(value=int(Basic[logvan]))
+            logvan+=1
+    except:
+        for logvar in LogVar:
+            globals()[logvar] = tk.IntVar(value=1)
 
     menu_analysis = tk.Menu(menu, tearoff=0)
     menu_analysis.add_command(label="导入", command=import_file, font=(DefaultFont, DefaultFontSize))
@@ -563,7 +749,7 @@ if __name__ == "__main__":
     menu_Func.add_separator()
     menu_Func.add_command(label="容器分析", command=lambda:ConAly(), font=(DefaultFont, DefaultFontSize))
     menu_Func.add_command(label="手动3D渲染", command=lambda: threading.Thread(target=LitRender.main_render_loop(Block_pos,bool(False)), daemon=True).start(), font=(DefaultFont, DefaultFontSize))
-    menu_Func.add_command(label="投影步骤查看器", command=lambda: LSC(), font=(DefaultFont, DefaultFontSize))
+    menu_Func.add_command(label="投影步骤查看器", command=lambda: StepOpen(), font=(DefaultFont, DefaultFontSize))
     menu_Help = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="帮助",menu=menu_Help, font=(DefaultFont, int(DefaultFontSize*2.0)))
     menu_Help.add_command(label="关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, DefaultFontSize))
@@ -579,12 +765,15 @@ if __name__ == "__main__":
     btn_import = CTkButton(frame_top, text="Import导入", command=import_file, font=(DefaultFont, DefaultFontSize*1.5))
     btn_import.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_import.pack(side=tk.LEFT, padx=5)
-    btn_simstart = CTkButton(frame_top, text="Analysis简洁分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, DefaultFontSize*1.5))
+    btn_simstart = CTkButton(frame_top, text="Analysis分析", command=lambda:threading.Thread(target=start_analysis, daemon=True).start(), font=(DefaultFont, DefaultFontSize*1.5))
     btn_simstart.configure(fg_color=color_map["PC"],text_color=color_map["BG"],corner_radius=DefaultCorner)
     btn_simstart.pack(side=tk.LEFT, padx=5)
-    btn_litstepchecker = CTkButton(frame_top, text="StepChecker步骤查看器", command=lambda: LSC(), font=(DefaultFont, int(DefaultFontSize*1.5)))
+    btn_litstepchecker = CTkButton(frame_top, text="StepChecker步骤查看器", command=lambda: StepOpen(), font=(DefaultFont, int(DefaultFontSize*1.5)))
     btn_litstepchecker.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
     btn_litstepchecker.pack(side=tk.LEFT, padx=5)
+    btn_conanaly = CTkButton(frame_top, text="ContainerAnalysis容器分析器", command=lambda: ConAly(),font=(DefaultFont, int(DefaultFontSize * 1.5)))
+    btn_conanaly.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
+    btn_conanaly.pack(side=tk.LEFT, padx=5)
     btn_hint = CTkButton(frame_top, text="!HINT注意事项!",
                              command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用'''),
                              font=(DefaultFont, DefaultFontSize*1.5))
@@ -749,7 +938,7 @@ if __name__ == "__main__":
     frame_stati2 = tk.Frame(frame_stati, bg=color_map["MC"])
     frame_stati2.pack(fill=tk.BOTH, padx=20, pady=20)
 
-    gl_view = OpenGLView(frame_3d, [((0, 0, 0), 'minecraft:dirt')], False, width=300, height=300, bg=color_map["PC"])
+    gl_view = OpenGLView(frame_3d, [((0, 0, 0), 'minecraft:dirt', [])], False, width=300, height=300, bg=color_map["PC"])
     gl_view.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     gl_view.after(1000, gl_view.redraw)
     stat_red = CTkFrame(frame_stati2, fg_color=color_map["PC"])
@@ -788,6 +977,16 @@ if __name__ == "__main__":
     a_desc = tk.Label(stat_desc, font=(DefaultFont, int(DefaultFontSize * 1.6)), bg=color_map["PC"],fg=color_map["MC"], justify="left", wraplength=200)
     a_desc.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
+    with open(grs('log.txt'), 'r', encoding='utf-8') as file:
+        file_text = str(file.read())
+        print(file_text)
+        if not file_text:
+            pass
+        else:
+            if boolbox(f"检测到上次分析投影文件,是否继续分析?\n地址:{file_text}", title="Analysis"):
+                file_path = file_text
+                del file_text
+                start_analysis()
 
     litem.mainloop()
 

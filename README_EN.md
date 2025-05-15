@@ -1,6 +1,6 @@
 [简体中文](./README.md) | **English**
 
-# LitematicaViewer v0.7.4
+# LitematicaViewer v0.7
 
 ### Minecraft tool - A tool to easily check Litematica files
 
