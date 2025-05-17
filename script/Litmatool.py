@@ -1,7 +1,10 @@
 import json, subprocess, sys, os
 
 def grs(relative_path):
-    """ 动态获取资源的绝对路径 """
+    """
+    动态获取资源的绝对路径
+    :param relative_path: PATH with if multiple layers os.path.join()
+    """
     if hasattr(sys, '_MEIPASS'):
         # 打包后的资源在临时目录
         base_path = sys._MEIPASS
@@ -23,13 +26,13 @@ def convert_units(number):
     return result if result else "0个"
 
 def cn_translate(id, key: bool = True, types = "Blocks") -> str:
-    '''
+    """
     CN translate
     :param id: Object ID translate
     :param key: False: value(CN) to key(EN) | True: key(EN) to value(CN)
     :param types: transfer dist type
     :return: Object Chinese name
-    '''
+    """
     if key:
         return json_data[types].get(id, id)
     else:
@@ -50,6 +53,7 @@ def find_keys_by_value_in_list(dictionary, target_value):
     return [key for key, value_list in dictionary.items() if target_value in value_list]
 
 def Category_Tran(data):
+    """find block category which belongs to"""
     for key, value_list in json_data["Category"].items():
         for prop in data.split("_"):
             if prop in value_list:
@@ -58,10 +62,7 @@ def Category_Tran(data):
 
 def id_tran_name(id: object) -> object:
     """
-
+    minecraft:ID -> ID
     :rtype: object
     """
     return id.split(':')[1]
-
-if __name__ == "__main__":
-    pass

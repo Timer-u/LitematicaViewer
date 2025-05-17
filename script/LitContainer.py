@@ -35,7 +35,7 @@ class LitCon:
 
     def LitConImport(self,localmode = False):
         with open(grs('log.txt'), 'r', encoding='utf-8') as file:
-            file_text = str(file.read())
+            file_text = os.path.normpath(str(file.read()))
             print("Selected file:", file_text)
             print(file_text)
             if localmode:

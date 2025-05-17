@@ -535,7 +535,7 @@ def start_analysis():
     if not file_path:
         import_file()
     else:
-        label_middle.config(text=f"{file_path.split("\\")[-1]}")
+        label_middle.config(text=f"{os.path.basename(file_path)}")
     Cla_Block = {"实体": [], "羊毛": [], "陶瓦": [], "混凝土": [], "玻璃": [], "木制": [], "石质": [],
                  "其他岩石": [], "石英": [], "矿类": [], "自然类": [], "末地类": [], "地狱类": [], "海晶类": [],
                  "粘土类": [], "红石": [], "铁类": [], "容器": [], "液体": [], "其他": []}
@@ -675,7 +675,7 @@ def start_analysis():
             count = count * 1
         insert_table(block_state, count)
     with open(grs('log.txt'), 'w', encoding='utf-8') as file:
-        file.write(os.path.normpath(file_path))
+        file.write(file_path)
         print("new file saved")
     litem.update_idletasks()
 
