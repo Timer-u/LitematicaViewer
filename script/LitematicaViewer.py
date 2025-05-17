@@ -1,4 +1,4 @@
-import threading,sys,os
+import threading,sys,os,time
 from amulet_nbt import load, NamedTag, IntTag
 from idlelib.history import History
 import tkinter as tk
@@ -145,11 +145,12 @@ class LitStepChecker:
         self.cy = 0
         self.md = 2
         self.blockSide = 20
-        self.side = 50
-        self.images = {}
-        self.imagesp = {}
+        self.side = 100
+        self.images = []
         self.select_image = ""
+        self.select_block = ""
         self.select_old = (0,0)
+        self.rendblock = 0
         #self.propMap = {"face":["attached","axis", "face", "facing", "hanging", "orientation", "part", "rotation", "shape"],"state":["bites", "candles", "charges", "delay", "eggs", "flower_amount", "note", "inverted", "layers", "level", "mode", "open", "pickles", "signal_fire", "type", "vertical_direction", "half"],"other":["waterlogged", "powered"]}
 
         self.LS = tk.Toplevel(litem)
@@ -174,75 +175,104 @@ class LitStepChecker:
         self.button_re.grid(row=0, column=5, padx=2, pady=5)
         self.label_y = tk.Label(self.frame, text="Y=0")
         self.label_y.grid(row=0, column=6, padx=2, pady=5)
+        self.label_rend = tk.Label(self.frame, text=f"累计渲染={self.rendblock}")
+        self.label_rend.grid(row=0, column=7, padx=2, pady=5)
         self.label_prop = tk.Label(self.frame, text="属性:None")
         self.label_prop.grid(row=1, column=0, padx=2, pady=5, columnspan = 6)
 
         self.frame2 = tk.Frame(self.LS, bg=color_map["BG"])
         self.frame2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.canvas = tk.Canvas(self.frame2, bg=color_map["MC"])
-        #self.scroll_x = ttk.Scrollbar(self.frame2, orient="horizontal", command=self.canvas.xview)
-        #self.scroll_y = ttk.Scrollbar(self.frame2, orient="vertical", command=self.canvas.yview)
-        #self.scroll_x.pack(side=tk.BOTTOM, fill=tk.X)
-        #self.scroll_y.pack(side=tk.LEFT, fill=tk.Y)
-        #self.canvas.configure(xscrollcommand=self.scroll_x.set, yscrollcommand=self.scroll_y.set)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.bind("<Motion>", self.block_prop_update)
-        #self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(-e.delta // 120, "units"))
-        #self.canvas.bind_all("<Shift-MouseWheel>", lambda e: self.canvas.xview_scroll(-e.delta // 120, "units"))
-        #self.frame2.grid_rowconfigure(0, weight=1)
-        #self.frame2.grid_columnconfigure(0, weight=1)
 
         self.update_canvas()
 
     def block_prop_update(self, event):
         i = (event.x - self.side - (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 )/ self.blockSide
         j = (event.y - self.side - (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 )/ self.blockSide
-        if (int(i),int(j)) == self.select_old: return
+        if (int(i),int(j)) == self.select_old or i<0 or j<0 or i>self.xl-1 or j>self.zl-1: return
         self.select_old=(int(i),int(j))
         block_id = self.pos_blocks[int(i)][self.cy][int(j)][0]
         if not block_id: return
         print((int(i),int(j)))
-        self.label_prop.config(text=f"{cn_translate(id_tran_name(block_id))}|属性:{self.pos_blocks[int(i)][self.cy][int(j)][1]}")
+        bp = self.pos_blocks[int(i)][self.cy][int(j)][1]
+        face = ""
+        powered = ""
+        half = ""
+        wl = ""
+        if "facing" in bp:
+            face = f"朝向:{bp["facing"]} "
+        elif "axis" in bp:
+            face = f"朝向:{bp["axis"]} "
+        if "half" in bp:
+            half = f"上下:{bp["half"]} "
+        elif "type" in bp:
+            half = f"上下:{bp["type"]} "
+        if "powered" in bp:
+            powered = f"充能:{bp["powered"]} "
+        if "waterlogged" in bp:
+            wl = f"含水:{bp["waterlogged"]} "
+
+
+        self.label_prop.config(text=f"{cn_translate(id_tran_name(block_id))}|{face}{powered}{half}{wl}属性:{bp}")
         image = Image.open(grs(os.path.join('item', 'block_selected.png')))
         image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
         self.photo = ImageTk.PhotoImage(image)
         self.select_image = self.photo
-        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide, anchor="nw", image=self.photo)
+        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide,
+                                 self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide, anchor="nw", image=self.photo)
+        image = Image.open(grs(os.path.join('block', f"{id_tran_name(block_id)}.png")))
+        image = image.convert('RGBA').resize((self.side-40, self.side-40), Image.NEAREST)
+        self.photo = ImageTk.PhotoImage(image)
+        self.select_block = self.photo
+        self.canvas.create_image(20, 20, anchor=tk.NW, image=self.photo)
 
     def update_canvas(self):
+        time1 = time.time()
         Scwidth = min(self.LS.winfo_width(), self.LS.winfo_height())
         Stuwidth = max(self.xl, self.zl)
         print((self.LS.winfo_width(), self.LS.winfo_height()))
-        self.images = {}
-        self.imagesp = {}
+        self.images = []
+        self.rendblock = 0
         self.canvas.delete("all")
         self.blockSide = int((Scwidth - self.side*2) / Stuwidth)
+        self.draw_line()
         if self.cy > 0 and self.ck.get():
             self.draw_previous_layer()
         self.draw_current_layer()
-        self.draw_line()
+        self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time()-time1:.2f}s")
 
     def draw_line(self):
         self.canvas.create_line(self.side, self.side, self.LS.winfo_width() - self.side, self.side, fill=color_map["PC"],
                                 arrow="last", width=4)
         self.canvas.create_line(self.side, self.side, self.side, self.LS.winfo_height() - self.side, fill=color_map["PC"],
                                 arrow="last", width=4)
-        self.canvas.create_text(self.side-5, self.side-5, fill=color_map["PC"], text="Z/X", anchor=tk.SE,
+        self.canvas.create_text(self.side, self.side-5, fill=color_map["PC"], text="X", anchor=tk.S,
                                 font=(DefaultFont, int(DefaultFontSize * 1.5)))
+        self.canvas.create_text(self.side-5, self.side, fill=color_map["PC"], text="Z", anchor=tk.E,
+                                font=(DefaultFont, int(DefaultFontSize * 1.5)))
+        easynum = self.xl > 50 or self.zl > 50
+        print(easynum)
         for i in range(self.xl+1):
             pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
-            self.canvas.create_line(pos_x, self.side, pos_x, int(self.side*0.75), fill=color_map["PC"], width=2)
-            self.canvas.create_text(pos_x, int(self.side/2), fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, int(self.blockSide * 0.5)))
-
+            if easynum and i % 5 == 0:
+                self.canvas.create_line(pos_x, int(self.side*0.7), pos_x, self.LS.winfo_width(), fill=color_map["PC"], width=1)
+                self.canvas.create_text(pos_x, int(self.side*0.75)-10, fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, max(10,int(self.blockSide * 0.5))))
+            else:
+                self.canvas.create_line(pos_x, self.side, pos_x, int(self.side * 0.75), fill=color_map["PC"], width=2)
         for j in range(self.zl+1):
             pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
-            self.canvas.create_line(self.side, pos_y, int(self.side*0.75), pos_y, fill=color_map["PC"], width=2)
-            self.canvas.create_text(int(self.side/2), pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, int(self.blockSide * 0.5)))
-
+            if easynum and j % 5 == 0:
+                self.canvas.create_line(int(self.side*0.7), pos_y, self.LS.winfo_width(), pos_y, fill=color_map["PC"], width=2)
+                self.canvas.create_text(int(self.side*0.75)-10, pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, max(10,int(self.blockSide * 0.5))))
+            else:
+                self.canvas.create_line(self.side, pos_y, int(self.side * 0.75), pos_y, fill=color_map["PC"], width=2)
     def draw_previous_layer(self):
         for i in range(self.xl):
+            self.combined_image = Image.new('RGBA', (self.blockSide, self.blockSide*self.zl), (0, 0, 0, 0))
             for j in range(self.zl):
-                if self.xl * self.blockSide + self.side != self.LS.winfo_width():
+                '''if self.xl * self.blockSide + self.side != self.LS.winfo_width():
                     pos_x = self.side + (
                             self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
                 else:
@@ -251,11 +281,11 @@ class LitStepChecker:
                     pos_y = self.side + (
                             self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
                 else:
-                    pos_y = j * self.blockSide + self.side
+                    pos_y = j * self.blockSide + self.side'''
                 bid, bprop = self.pos_blocks[i][self.cy - 1][j]
                 if not bid:
                     continue
-                self.photo = None
+                self.rendblock+=1
                 try:
                     image = Image.open(grs(os.path.join('block', f"{id_tran_name(bid)}.png")))
                     image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
@@ -264,18 +294,17 @@ class LitStepChecker:
                     r,g,b,a = image.split()
                     mask = a.point(lambda x: 255 if x > 0 else 0)
                     image = Image.merge("RGBA", (r, g, b, Image.composite(a, new_alpha, mask)))
-                    self.photo = ImageTk.PhotoImage(image)
-                    self.imagesp[f"p{i}{j}"]=self.photo
-                    self.canvas.create_image(pos_x, pos_y, anchor="nw", image=self.photo)
+                    self.combined_image.paste(image, (0, self.blockSide*j))
                     #print(f"PreBehind layer: {(i, j)}|{bid}|{(pos_x,pos_y)}")
                 except:
                     image = Image.open(grs(os.path.join('block', 'info_update.png')))
                     image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
                     image = ImageEnhance.Brightness(image).enhance(0.7)
                     image.putalpha(Image.new('L', image.size, 64))
-                    self.photo = ImageTk.PhotoImage(image)
-                    self.imagesp[f"p{i}{j}"]=self.photo
-                    self.canvas.create_image(pos_x, pos_y, anchor="nw", image=self.photo)
+                    self.combined_image.paste(image, (0, self.blockSide*j))
+            photo = ImageTk.PhotoImage(self.combined_image)
+            self.images.append(photo)
+            self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
             litem.update_idletasks()
             #print(images)
 
@@ -283,8 +312,9 @@ class LitStepChecker:
     def draw_current_layer(self):
         textrender = []
         for i in range(self.xl):
+            self.combined_image = Image.new('RGBA', (self.blockSide, self.blockSide*self.zl), (0, 0, 0, 0))
             for j in range(self.zl):
-                if self.xl * self.blockSide + self.side != self.LS.winfo_width():
+                '''if self.xl * self.blockSide + self.side != self.LS.winfo_width():
                     pos_x = self.side + (
                             self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
                 else:
@@ -293,33 +323,28 @@ class LitStepChecker:
                     pos_y = self.side + (
                             self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
                 else:
-                    pos_y = j * self.blockSide + self.side
+                    pos_y = j * self.blockSide + self.side'''
                 bid, bprop = self.pos_blocks[i][self.cy][j]
                 if not bid:
                     continue
-                self.photo = None
+                self.rendblock += 1
                 try:
                     image = Image.open(grs(os.path.join('block', f"{id_tran_name(bid)}.png")))
                     image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.NEAREST)
                     if self.ck.get():
                         image.putalpha(Image.new('L', image.size, 234))
-                    self.photo = ImageTk.PhotoImage(image)
-                    self.images[f"c{i}{j}"]=self.photo
-                    self.canvas.create_image(pos_x, pos_y, anchor=tk.NW, image=self.photo)
+                    self.combined_image.paste(image, (0, self.blockSide*j))
                     #print(f"Current layer: {(i, j)}|{bid}")
                 except Exception as e:
                     print(e)
-                    # 加载备用图片
                     image = Image.open(grs(os.path.join('block', 'info_update.png')))
                     image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.NEAREST)
-                    self.photo = ImageTk.PhotoImage(image)
-                    self.images[f"c{i}{j}"]=self.photo
-                    self.canvas.create_image(pos_x, pos_y, anchor=tk.NW, image=self.photo)
-                    textrender.append((pos_x,pos_y,cn_translate(id_tran_name(bid))))
-            for x,y,t in textrender:
-                self.canvas.create_text(x, y,text=t,anchor=tk.NW, font=(DefaultFont, int(self.blockSide*0.5)), fill="#f70400")
+                    self.combined_image.paste(image, (0, self.blockSide*j))
+                print(len(self.images))
+            photo = ImageTk.PhotoImage(self.combined_image)
+            self.images.append(photo)
+            self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
             litem.update_idletasks()
-
 
     def change_y(self,direction):
         if direction == "up" and self.cy < self.yl-1:
