@@ -1,6 +1,6 @@
 **简体中文** | [English](./README_EN.md)
 
-# LitematicaViewer投影查看器 v0.7
+# LitematicaViewer投影查看器 v0.7+
 
 ### Minecraft tool - 让我的世界投影查看更加的轻量便捷
 
@@ -10,6 +10,8 @@
 [![YoutubeIntro](https://img.shields.io/badge/-Youtube-00A1D6?logo=youtube&logoColor=red)](https://www.youtube.com/watch?v=0nofWrfKJeg)
 
 GITHUB链接: https://github.com/albertchen857/LitematicaViewer
+稳定版EXE文件右侧Resource下载(0.7.2)
+最新(预览)版本PYTHON文件自行克隆 (如果发现问题请多多写写ISSUE谢谢)
 求求点点星吧 I want Stars~ target 100 stars
 
 一个轻量便捷的投影查看器
@@ -18,7 +20,8 @@ GITHUB链接: https://github.com/albertchen857/LitematicaViewer
 - `导出` 导出投影数据 (文本&表格)
 - `分类导出` 导出分类投影数据 (文本&表格)
 - `简洁分析` 轻量分析，只会显示方块名与数量
-- `容器分析` 容器分析，显示容器中存储的方块和基础信息
+- `容器分析器` 容器分析，显示容器中存储的方块和基础信息
+- `步骤查看器` 渲染投影各层方块,包括其方块和属性
 - `生成图形投影` 快捷生成一个常规立方体
 - `替换特定方块` 快速替换/限制投影里的不同方块
 - `3D渲染` 3D渲染目标投影 (可能引起卡顿)
@@ -41,8 +44,9 @@ GITHUB链接: https://github.com/albertchen857/LitematicaViewer
 |-统计Stat
 | |-常规统计 (红石/中位/其他)Basic
 | |-成分统计 (方块拼图)PieGraph
-| |-3D渲染 (旋转/静止)3DRender
 |-功能func
+| |-3D渲染 (旋转/静止)3DRender
+| |-步骤查看器StepChecker
 | |-生成图形投影Polygon
 | | |-立方体生成Cube
 | | |-特殊形状生成(开发)Unusual

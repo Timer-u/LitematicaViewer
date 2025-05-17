@@ -1,6 +1,6 @@
 [简体中文](./README.md) | **English**
 
-# LitematicaViewer v0.7
+# LitematicaViewer v0.7+
 
 ### Minecraft tool - A tool to easily check Litematica files
 
@@ -11,6 +11,8 @@
 
 GITHUB Link: https://github.com/albertchen857/LitematicaViewer
 Please give a star! I want Stars~ Target 100 stars
+Stable EXE version downloads in Resource
+Preview Python version clone yourself
 
 A light Viewer for Litematica files
 
@@ -19,6 +21,7 @@ A light Viewer for Litematica files
 - `Classification Output` Output Litematica analysis data with classification into a file or chart. (Text File & Excel File)
 - `Simple Analysis` Used for easy checking of block numbers and names (no properties).
 - `Container Analysis` Analyze containers with items inside, showing items and basic info.
+- `Step Checker` Render Structure blocks for every layers (y axis) that includes block textures and properties.
 - `Spawn Regular Shape` A Light Tool to generate a regular shape.
 - `Fill Specific Block` A Light Tool to replace multiple types of blocks with your own set limitations.
 - `3D Rendering` 3D Rendering for Litematic files.
@@ -41,8 +44,9 @@ LitematicaViewer
 |- Statistics
 | |- Basic Statistics (Redstone/Median/Other)
 | |- Composition Statistics (Block Pie Chart)
-| |- 3D Rendering (Rotating/Static)
 |- Functionality
+| |- 3D Rendering (Rotating/Static)
+| |- Step Checker (render every layers in structure)
 | |- Generate Polygon Schematic
 | | |- Cube Generation
 | | |- Special Shape Generation (In development)
