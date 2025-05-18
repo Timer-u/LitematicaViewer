@@ -1,4 +1,4 @@
-import threading,sys,os,time
+import threading,sys,os,time,requests
 from amulet_nbt import load, NamedTag, IntTag
 from idlelib.history import History
 import tkinter as tk
@@ -118,6 +118,29 @@ def on_exit():
     with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
         json.dump(data, js, indent=2)
 atexit.register(on_exit) #退出绑定
+
+def Update(mode:["Github","Onedrive"]):
+    try:
+        try:
+            response = requests.get("https://api.github.com/repos/albertchen857/LitematicaViewer/releases/latest", timeout=10)
+            response.raise_for_status()  # 检查 HTTP 错误
+            latest_tag = str(response.json()["tag_name"])
+        except:
+            proxies = {"https": "http://127.0.0.1:7890"}
+            response = requests.get("https://api.github.com/repos/albertchen857/LitematicaViewer/releases/latest",timeout=10,proxies=proxies)
+            response.raise_for_status()  # 检查 HTTP 错误
+            latest_tag = str(response.json()["tag_name"])
+    except Exception as e:
+        print(f"发生错误: {e}")
+        return
+    if latest_tag[-5:].replace('_', '.')!=APP_VERSION:
+        print(latest_tag[-5:])
+        if boolbox(f"发现新版本{latest_tag}是否下载",title="Download"):
+            match mode:
+                case "Github":
+                    webbrowser.open("https://github.com/albertchen857/LitematicaViewer/releases/latest/download/LitematicaViewer.7z")
+    else:
+        msgbox("已是最新版本~",title="Download")
 
 def ConAly():
     try:
@@ -763,6 +786,8 @@ if __name__ == "__main__":
     menu.add_cascade(label="帮助",menu=menu_Help, font=(DefaultFont, int(DefaultFontSize*2.0)))
     menu_Help.add_command(label="关于", command=lambda:webbrowser.open("https://github.com/albertchen857/LitematicaViewer"), font=(DefaultFont, DefaultFontSize))
     menu_Help.add_command(label="关于作者", command=lambda:webbrowser.open("https://space.bilibili.com/3494373232741268"), font=(DefaultFont, DefaultFontSize))
+    menu_Help.add_command(label="下载最新版本Github",command=lambda: Update('Github'),font=(DefaultFont, DefaultFontSize))
+    menu_Help.add_command(label="下载最新版本Onedrive", command=lambda: Update('Onedrive'),font=(DefaultFont, DefaultFontSize))
     menu_Help.add_command(label="手动更新软件库", command=manual_install_pk, font=(DefaultFont, DefaultFontSize))
     litem.config(menu=menu, padx=10)
 
