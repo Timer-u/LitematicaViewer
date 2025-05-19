@@ -192,15 +192,18 @@ class LitStepChecker:
         self.button_sdown = tk.Button(self.frame, text="⇊", command=lambda: self.change_y("sdown"))
         self.button_sdown.grid(row=0, column=3, padx=2, pady=5)
         self.ck = tk.IntVar(value=1)
-        self.checkbutton = tk.Checkbutton(self.frame, text="BEHIND", variable=self.ck)
+        self.gr = tk.IntVar(value=1)
+        self.checkbutton = tk.Checkbutton(self.frame, text="底层", variable=self.ck)
         self.checkbutton.grid(row=0, column=4, padx=2, pady=5)
+        self.grid = tk.Checkbutton(self.frame, text="网格", variable=self.gr)
+        self.grid.grid(row=0, column=5, padx=2, pady=5)
         self.button_re = tk.Button(self.frame, text="渲染", command=lambda: self.update_canvas())
-        self.button_re.grid(row=0, column=5, padx=2, pady=5)
+        self.button_re.grid(row=0, column=6, padx=2, pady=5)
         self.label_y = tk.Label(self.frame, text="Y=0")
-        self.label_y.grid(row=0, column=6, padx=2, pady=5)
+        self.label_y.grid(row=0, column=7, padx=2, pady=5)
         self.label_rend = tk.Label(self.frame, text=f"累计渲染={self.rendblock}")
-        self.label_rend.grid(row=0, column=7, padx=2, pady=5)
-        tk.Label(self.frame, text=f"容器内窥可结合[容器分析器]使用").grid(row=0, column=8, padx=2, pady=5)
+        self.label_rend.grid(row=0, column=8, padx=2, pady=5)
+        tk.Label(self.frame, text=f"容器内窥可结合[容器分析器]使用").grid(row=0, column=9, padx=2, pady=5)
         self.label_prop = tk.Label(self.LS, text="方块ID | 方块坐标 | 方块属性")
         self.label_prop.pack(fill=tk.Y, side=tk.TOP)
 
@@ -225,13 +228,15 @@ class LitStepChecker:
         powered = ""
         half = ""
         wl = ""
+        facing = ""
         a = ""
+        waterlogged = ""
         if "facing" in bp:
-            a = bp["facing"]
-            face = f"朝向:{a} "
+            facing = bp["facing"]
+            face = f"朝向:{facing} "
         elif "axis" in bp:
-            a = bp["axis"]
-            face = f"朝向:{a}轴 "
+            facing = bp["axis"]
+            face = f"朝向:{facing}轴 "
         if "half" in bp:
             a = bp["half"]
             half = f"上下:{a} "
@@ -239,20 +244,53 @@ class LitStepChecker:
             a = bp["type"]
             half = f"上下:{a} "
         if "powered" in bp:
-            a = bp["powered"]
-            powered = f"充能:{a} "
+            powered = f"充能:{bp["powered"]} "
         if "waterlogged" in bp:
-            a = bp["waterlogged"]
-            wl = f"含水:{a} "
+            waterlogged = bp["waterlogged"]
+            wl = f"含水:{waterlogged} "
+        match facing:
+            case "north" | "z":
+                facing = "\u2B9D"
+            case "south":
+                facing = "\u2B9F"
+            case "west" | "x":
+                facing = "\u2B9C"
+            case "east":
+                facing = "\u2B9E"
+            case "up" | "y":
+                facing = "\u2B08"
+            case "down":
+                facing = "\u2B0B"
+            case _:
+                facing = "-"
+        match a:
+            case "top" | "upper":
+                a = "\u2B9D"
+            case "bottom" | "lower":
+                a = "\u2B9F"
+            case "left":
+                a = "\u2B9C"
+            case "right":
+                a = "\u2B9E"
+            case _:
+                a = "-"
 
+        pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide
+        pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide
+        if wl:
+            color = "#0680FA" if not bool(waterlogged) else "#929292"
+            self.canvas.create_oval(pos_x+0.1*self.blockSide,pos_y+0.1*self.blockSide,pos_x+0.25*self.blockSide,pos_y+0.25*self.blockSide,fill=color)
+        if facing:
+            self.canvas.create_text(pos_x + self.blockSide, pos_y,fill="#E3130D",text=facing,font=(DefaultFont,int(DefaultFontSize*0.5),"bold"),anchor="ne")
+        if a:
+            self.canvas.create_text(pos_x + self.blockSide, pos_y + self.blockSide, fill="#0680FA", text=a,font=(DefaultFont, int(DefaultFontSize * 0.5), "bold"), anchor="se")
 
         self.label_prop.config(text=f"{cn_translate(id_tran_name(block_id))}|pos{(int(i),self.cy,int(j))}|{face}{powered}{half}{wl}属性:{bp}")
         image = Image.open(grs(os.path.join('item', 'block_selected.png')))
         image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
         self.photo = ImageTk.PhotoImage(image)
         self.select_image = self.photo
-        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide,
-                                 self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide, anchor="nw", image=self.photo)
+        self.canvas.create_image(pos_x,pos_y, anchor="nw", image=self.photo)
         image = Image.open(grs(os.path.join('block', f"{id_tran_name(block_id)}.png")))
         image = image.convert('RGBA').resize((self.side-40, self.side-40), Image.NEAREST)
         self.photo = ImageTk.PhotoImage(image)
@@ -284,23 +322,28 @@ class LitStepChecker:
         self.canvas.create_text(self.side-5, self.side, fill=color_map["PC"], text="Z", anchor=tk.E,
                                 font=(DefaultFont, int(DefaultFontSize * 1.5)))
         easynum = self.xl > 50 or self.zl > 50
+        grid = bool(self.gr.get())
         print(easynum)
         for i in range(self.xl+1):
             pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
             if easynum and i % 5 == 0:
-                self.canvas.create_line(pos_x, int(self.side*0.7), pos_x, self.LS.winfo_width(), fill=color_map["PC"], width=1)
-                self.canvas.create_text(pos_x, int(self.side*0.75)-10, fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, max(10,int(self.blockSide * 0.5))))
+                self.canvas.create_line(pos_x, int(self.side*0.7), pos_x, self.LS.winfo_width() if grid else self.side, fill=color_map["PC"], width=1)
+                self.canvas.create_text(pos_x, int(self.side*0.7)-10, fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, max(10,int(self.blockSide * 0.3))))
+            elif easynum:
+                self.canvas.create_line(pos_x, int(self.side * 0.75), pos_x, self.LS.winfo_width() if grid else self.side,fill=color_map["PC"], width=1)
             else:
-                self.canvas.create_text(pos_x, int(self.side * 0.75)-10, fill=color_map["PC"], text=i,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.5))))
-                self.canvas.create_line(pos_x, int(self.side * 0.75), pos_x,self.LS.winfo_width() , fill=color_map["PC"], width=2)
+                self.canvas.create_text(pos_x, int(self.side * 0.75)-10, fill=color_map["PC"], text=i,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.3))))
+                self.canvas.create_line(pos_x, int(self.side * 0.75), pos_x,self.LS.winfo_width() if grid else self.side, fill=color_map["PC"], width=1)
         for j in range(self.zl+1):
             pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
             if easynum and j % 5 == 0:
-                self.canvas.create_line(int(self.side*0.7), pos_y, self.LS.winfo_width(), pos_y, fill=color_map["PC"], width=2)
-                self.canvas.create_text(int(self.side*0.75)-10, pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, max(10,int(self.blockSide * 0.5))))
+                self.canvas.create_line(int(self.side*0.7), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
+                self.canvas.create_text(int(self.side*0.75)-10, pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, max(10,int(self.blockSide * 0.3))))
+            elif easynum:
+                self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
             else:
-                self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width(), pos_y, fill=color_map["PC"], width=2)
-                self.canvas.create_text(int(self.side * 0.75) - 10, pos_y, fill=color_map["PC"], text=j,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.5))))
+                self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
+                self.canvas.create_text(int(self.side * 0.75) - 10, pos_y, fill=color_map["PC"], text=j,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.3))))
     def draw_previous_layer(self):
         for i in range(self.xl):
             self.combined_image = Image.new('RGBA', (self.blockSide, self.blockSide*self.zl), (0, 0, 0, 0))
@@ -892,7 +935,7 @@ if __name__ == "__main__":
     btn_spawn2 = CTkButton(frame_func_change, text="生成", font=(DefaultFont, DefaultFontSize*1.6, "bold"), command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
     btn_spawn2.configure(fg_color=color_map["BG"],text_color=color_map["TT"],corner_radius=DefaultCorner)
     btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=4)
-    tk.Label(frame_func_change, text="替换表= 旧方块-新方块,...", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400").grid(row=6, column=0, padx=5, pady=5, columnspan=4)
+    tk.Label(frame_func_change, text="替换表= 旧方块[选定方块参数]:新方块[替换方块参数],...", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400").grid(row=6, column=0, padx=5, pady=5, columnspan=4)
     # -- 分析设置
     frame_Output = CTkScrollableFrame(frame_func, fg_color=color_map["BG"], corner_radius=DefaultCorner)
     frame_Output.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=20, pady=20)
