@@ -235,18 +235,25 @@ class LitStepChecker:
         powered = ""
         half = ""
         wl = ""
+        a = ""
         if "facing" in bp:
-            face = f"朝向:{bp["facing"]} "
+            a = bp["facing"]
+            face = f"朝向:{a} "
         elif "axis" in bp:
-            face = f"朝向:{bp["axis"]}轴 "
+            a = bp["axis"]
+            face = f"朝向:{a}轴 "
         if "half" in bp:
-            half = f"上下:{bp["half"]} "
+            a = bp["half"]
+            half = f"上下:{a} "
         elif "type" in bp:
-            half = f"上下:{bp["type"]} "
+            a = bp["type"]
+            half = f"上下:{a} "
         if "powered" in bp:
-            powered = f"充能:{bp["powered"]} "
+            a = bp["powered"]
+            powered = f"充能:{a} "
         if "waterlogged" in bp:
-            wl = f"含水:{bp["waterlogged"]} "
+            a = bp["waterlogged"]
+            wl = f"含水:{a} "
 
         pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide
         pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide
