@@ -51,11 +51,11 @@ def create_structure(block_id: str, start_coords: tuple, dimensions: tuple, holl
     save_Schematic(schematic,"Cube")
 
 # {"minecraft:iron_block":"minecraft:dirt"}
-def change_Schematic(schematic, change_list, limit: tuple, file_name):
-    replace_dict = change_list
+def change_Schematic(schematic, change_list : dict[str:[str,dict,dict]], limit: tuple, file_name):
+    print(change_list)
     (xmin, xmax), (ymin, ymax), (zmin, zmax) = limit
     maxx, maxy, maxz, minx, miny, minz = get_schematic_bounds(schematic)
-    print(f"BoundsRegion: xmin={minx}, xmax={maxx}, ymin={miny}, ymax={maxy}, zmin={minz}, zmax={maxz}")
+    #print(f"BoundsRegion: xmin={minx}, xmax={maxx}, ymin={miny}, ymax={maxy}, zmin={minz}, zmax={maxz}")
     # 动态设置边界条件
     xmin = minx if xmin == '' else minx-int(xmin) if int(xmin) < minx else int(xmin)
     xmax = maxx if xmax == '' else maxx-int(xmax) if int(xmax) > maxx else int(xmax)
@@ -70,21 +70,26 @@ def change_Schematic(schematic, change_list, limit: tuple, file_name):
         block_positions = list(region.block_positions())
         print(f"Block positions in region {region_name}: {block_positions}")
 
-        for x, y, z in block_positions:
+        for x, y, z in block_positions: #漏斗{"facing":"west"}-漏斗{"facing":"down"}
             if xmin <= x <= xmax and ymin <= y <= ymax and zmin <= z <= zmax:
                 block = region[x, y, z]
                 #print(f"Processing block at ({x}, {y}, {z}): {block.id}")
-                if block.id in replace_dict:
-                    properties = block._BlockState__properties
-                    if properties:
-                        new_block = litemapy.BlockState(replace_dict[block.id], **properties)
-                    else:
-                        new_block = litemapy.BlockState(replace_dict[block.id])
-                    region[x, y, z] = new_block
-                    #print(f"Replaced block at ({x}, {y}, {z}) with {replace_dict[block.id]}")
+                if block.id not in change_list:
+                    continue
+                properties = block._BlockState__properties
+                replace, iprop, fprop = change_list[block.id]
+                #print(f"prop{properties}|{(iprop,fprop)}")
+                if not (iprop.items() <= properties.items()):
+                    continue
+                for prop, val in fprop.items():
+                    if prop in properties:
+                        properties[prop] = val
+                if properties:
+                    new_block = litemapy.BlockState(replace, **properties)
                 else:
-                    #print(f"Block {block.id} at ({x}, {y}, {z}) not in replace_dict")
-                    pass
+                    new_block = litemapy.BlockState(replace)
+                region[x, y, z] = new_block
+
 
     save_Schematic(schematic, file_name)
     print(f"Schematic saved to {file_name}")

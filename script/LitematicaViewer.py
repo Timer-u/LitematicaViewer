@@ -158,12 +158,12 @@ class LitStepChecker:
         self.xl = max([x for (x, _, _), _, _ in Block_pos]) + 1
         self.yl = max([y for (_, y, _), _, _ in Block_pos]) + 1
         self.zl = max([z for (_, _, z), _, _ in Block_pos]) + 1
-        print((self.xl, self.yl, self.zl))
+        #print((self.xl, self.yl, self.zl))
         self.pos_blocks = [[[(None,None)] * (self.zl) for _ in range(self.yl)] for _ in range(self.xl)]
         for position, block_id, block_prop in Block_pos:
             x, y, z = position
             self.pos_blocks[x][y][z] = (block_id, block_prop)
-        print(self.pos_blocks)
+        #print(self.pos_blocks)
 
         self.cy = 0
         self.md = 2
@@ -179,7 +179,10 @@ class LitStepChecker:
         self.LS = tk.Toplevel(litem)
         self.LS.title("Litematica Step Checker")
         self.LS.iconbitmap(grs("icon.ico"))
-        self.LS.geometry("800x800")
+        if sys.platform.startswith("win"):
+            self.LS.state("zoomed")  # Windows 专用
+        else:
+            self.LS.attributes("-zoomed", True)  # Linux/macOS
         self.LS.configure(bg=color_map["BG"])
         self.frame = tk.Frame(self.LS, bg=color_map["BG"])
         self.frame.pack(side=tk.TOP)
@@ -193,17 +196,22 @@ class LitStepChecker:
         self.button_sdown.grid(row=0, column=3, padx=2, pady=5)
         self.ck = tk.IntVar(value=1)
         self.gr = tk.IntVar(value=1)
+        self.prr = tk.IntVar(value=1)
         self.checkbutton = tk.Checkbutton(self.frame, text="底层", variable=self.ck)
         self.checkbutton.grid(row=0, column=4, padx=2, pady=5)
-        self.grid = tk.Checkbutton(self.frame, text="网格", variable=self.gr)
-        self.grid.grid(row=0, column=5, padx=2, pady=5)
+        self.cgrid = tk.Checkbutton(self.frame, text="网格", variable=self.gr)
+        self.cgrid.grid(row=0, column=5, padx=2, pady=5)
+        self.proprend = tk.Checkbutton(self.frame, text="属性渲染", variable=self.prr)
+        self.proprend.grid(row=0, column=6, padx=2, pady=5)
         self.button_re = tk.Button(self.frame, text="渲染", command=lambda: self.update_canvas())
-        self.button_re.grid(row=0, column=6, padx=2, pady=5)
+        self.button_re.grid(row=0, column=7, padx=2, pady=5)
+        tk.Button(self.frame, text="帮助", command=lambda: msgbox(
+            "容器内窥可结合[容器分析器]使用\n左上角圆圈为蓝代表含水方块,灰为非含水方块\n右上角绿色符号代表方位: A V < > 7 L 分别代表北南西东上下方位\n右下角黄色符号代表特殊属性:\n\t2格方块的上下部分,楼梯/半砖/活版门上下放置,箱子左右部分")).grid(
+            row=0, column=8, padx=2, pady=5)
         self.label_y = tk.Label(self.frame, text="Y=0")
-        self.label_y.grid(row=0, column=7, padx=2, pady=5)
+        self.label_y.grid(row=0, column=9, padx=2, pady=5)
         self.label_rend = tk.Label(self.frame, text=f"累计渲染={self.rendblock}")
-        self.label_rend.grid(row=0, column=8, padx=2, pady=5)
-        tk.Label(self.frame, text=f"容器内窥可结合[容器分析器]使用").grid(row=0, column=9, padx=2, pady=5)
+        self.label_rend.grid(row=0, column=10, padx=2, pady=5)
         self.label_prop = tk.Label(self.LS, text="方块ID | 方块坐标 | 方块属性")
         self.label_prop.pack(fill=tk.Y, side=tk.TOP)
 
@@ -218,72 +226,30 @@ class LitStepChecker:
     def block_prop_update(self, event):
         i = (event.x - self.side - (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 )/ self.blockSide
         j = (event.y - self.side - (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 )/ self.blockSide
-        if (int(i),int(j)) == self.select_old or i<0 or j<0 or i>self.xl-1 or j>self.zl-1: return
+        if (int(i),int(j)) == self.select_old or i<0 or j<0 or i>self.xl or j>self.zl: return
         self.select_old=(int(i),int(j))
         block_id = self.pos_blocks[int(i)][self.cy][int(j)][0]
         if not block_id: return
-        print((int(i),int(j)))
         bp = self.pos_blocks[int(i)][self.cy][int(j)][1]
         face = ""
         powered = ""
         half = ""
         wl = ""
-        facing = ""
-        a = ""
-        waterlogged = ""
         if "facing" in bp:
-            facing = bp["facing"]
-            face = f"朝向:{facing} "
+            face = f"朝向:{bp["facing"]} "
         elif "axis" in bp:
-            facing = bp["axis"]
-            face = f"朝向:{facing}轴 "
+            face = f"朝向:{bp["axis"]}轴 "
         if "half" in bp:
-            a = bp["half"]
-            half = f"上下:{a} "
+            half = f"上下:{bp["half"]} "
         elif "type" in bp:
-            a = bp["type"]
-            half = f"上下:{a} "
+            half = f"上下:{bp["type"]} "
         if "powered" in bp:
             powered = f"充能:{bp["powered"]} "
         if "waterlogged" in bp:
-            waterlogged = bp["waterlogged"]
-            wl = f"含水:{waterlogged} "
-        match facing:
-            case "north" | "z":
-                facing = "\u2B9D"
-            case "south":
-                facing = "\u2B9F"
-            case "west" | "x":
-                facing = "\u2B9C"
-            case "east":
-                facing = "\u2B9E"
-            case "up" | "y":
-                facing = "\u2B08"
-            case "down":
-                facing = "\u2B0B"
-            case _:
-                facing = "-"
-        match a:
-            case "top" | "upper":
-                a = "\u2B9D"
-            case "bottom" | "lower":
-                a = "\u2B9F"
-            case "left":
-                a = "\u2B9C"
-            case "right":
-                a = "\u2B9E"
-            case _:
-                a = "-"
+            wl = f"含水:{bp["waterlogged"]} "
 
         pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide
         pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide
-        if wl:
-            color = "#0680FA" if not bool(waterlogged) else "#929292"
-            self.canvas.create_oval(pos_x+0.1*self.blockSide,pos_y+0.1*self.blockSide,pos_x+0.25*self.blockSide,pos_y+0.25*self.blockSide,fill=color)
-        if facing:
-            self.canvas.create_text(pos_x + self.blockSide, pos_y,fill="#E3130D",text=facing,font=(DefaultFont,int(DefaultFontSize*0.5),"bold"),anchor="ne")
-        if a:
-            self.canvas.create_text(pos_x + self.blockSide, pos_y + self.blockSide, fill="#0680FA", text=a,font=(DefaultFont, int(DefaultFontSize * 0.5), "bold"), anchor="se")
 
         self.label_prop.config(text=f"{cn_translate(id_tran_name(block_id))}|pos{(int(i),self.cy,int(j))}|{face}{powered}{half}{wl}属性:{bp}")
         image = Image.open(grs(os.path.join('item', 'block_selected.png')))
@@ -301,7 +267,6 @@ class LitStepChecker:
         time1 = time.time()
         Scwidth = min(self.LS.winfo_width(), self.LS.winfo_height())
         Stuwidth = max(self.xl, self.zl)
-        print((self.LS.winfo_width(), self.LS.winfo_height()))
         self.images = []
         self.rendblock = 0
         self.canvas.delete("all")
@@ -310,6 +275,8 @@ class LitStepChecker:
         if self.cy > 0 and self.ck.get():
             self.draw_previous_layer()
         self.draw_current_layer()
+        if self.prr.get():
+            self.draw_prop_layer()
         self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time()-time1:.2f}s")
 
     def draw_line(self):
@@ -323,7 +290,6 @@ class LitStepChecker:
                                 font=(DefaultFont, int(DefaultFontSize * 1.5)))
         easynum = self.xl > 50 or self.zl > 50
         grid = bool(self.gr.get())
-        print(easynum)
         for i in range(self.xl+1):
             pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
             if easynum and i % 5 == 0:
@@ -345,8 +311,8 @@ class LitStepChecker:
                 self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
                 self.canvas.create_text(int(self.side * 0.75) - 10, pos_y, fill=color_map["PC"], text=j,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.3))))
     def draw_previous_layer(self):
+        self.combined_image = Image.new('RGBA', (self.blockSide * self.xl, self.blockSide * self.zl), (0, 0, 0, 0))
         for i in range(self.xl):
-            self.combined_image = Image.new('RGBA', (self.blockSide, self.blockSide*self.zl), (0, 0, 0, 0))
             for j in range(self.zl):
                 bid, bprop = self.pos_blocks[i][self.cy - 1][j]
                 if not bid:
@@ -360,22 +326,22 @@ class LitStepChecker:
                     r,g,b,a = image.split()
                     mask = a.point(lambda x: 255 if x > 0 else 0)
                     image = Image.merge("RGBA", (r, g, b, Image.composite(a, new_alpha, mask)))
-                    self.combined_image.paste(image, (0, self.blockSide*j))
+                    self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
                 except:
                     image = Image.open(grs(os.path.join('block', 'info_update.png')))
                     image = image.convert('RGBA').resize((self.blockSide, self.blockSide), Image.LANCZOS)
                     image = ImageEnhance.Brightness(image).enhance(0.7)
                     image.putalpha(Image.new('L', image.size, 64))
-                    self.combined_image.paste(image, (0, self.blockSide*j))
-            photo = ImageTk.PhotoImage(self.combined_image)
-            self.images.append(photo)
-            self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
-            litem.update_idletasks()
+                    self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
+        photo = ImageTk.PhotoImage(self.combined_image)
+        self.images.append(photo)
+        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
+        litem.update_idletasks()
 
 
     def draw_current_layer(self):
+        self.combined_image = Image.new('RGBA', (self.blockSide * self.xl, self.blockSide * self.zl), (0, 0, 0, 0))
         for i in range(self.xl):
-            self.combined_image = Image.new('RGBA', (self.blockSide, self.blockSide*self.zl), (0, 0, 0, 0))
             for j in range(self.zl):
                 bid, bprop = self.pos_blocks[i][self.cy][j]
                 if not bid:
@@ -386,15 +352,76 @@ class LitStepChecker:
                     image = image.convert('RGB').resize((self.blockSide, self.blockSide), Image.NEAREST)
                     if self.ck.get():
                         image.putalpha(Image.new('L', image.size, 234))
-                    self.combined_image.paste(image, (0, self.blockSide*j))
+                    self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
                 except Exception as e:
                     print(e)
                     image = Image.open(grs(os.path.join('block', 'info_update.png')))
                     image = image.convert('RGB').resize((self.blockSide, self.blockSide), Image.NEAREST)
-                    self.combined_image.paste(image, (0, self.blockSide*j))
-            photo = ImageTk.PhotoImage(self.combined_image)
-            self.images.append(photo)
-            self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
+                    self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
+        photo = ImageTk.PhotoImage(self.combined_image)
+        self.images.append(photo)
+        self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
+        litem.update_idletasks()
+
+    def draw_prop_layer(self):
+        for i in range(self.xl):
+            for j in range(self.zl):
+                bp = self.pos_blocks[int(i)][self.cy][int(j)][1]
+                print(bp)
+                if not bp: continue
+                pos_x = self.side + (
+                            self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
+                pos_y = self.side + (
+                            self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
+
+                facing = ""
+                a = ""
+                waterlogged = ""
+                if "facing" in bp:
+                    facing = bp["facing"]
+                elif "axis" in bp:
+                    facing = bp["axis"]
+                if "half" in bp:
+                    a = bp["half"]
+                elif "type" in bp:
+                    a = bp["type"]
+                if "waterlogged" in bp:
+                    waterlogged = bp["waterlogged"]
+                match facing:
+                    case "north" | "z":
+                        facing = "A"
+                    case "south":
+                        facing = "v"
+                    case "west" | "x":
+                        facing = "<"
+                    case "east":
+                        facing = ">"
+                    case "up" | "y":
+                        facing = "7"
+                    case "down":
+                        facing = "L"
+
+                match a:
+                    case "top" | "upper":
+                        a = "A"
+                    case "bottom" | "lower":
+                        a = "v"
+                    case "left":
+                        a = "<"
+                    case "right":
+                        a = ">"
+
+
+                if waterlogged is not "":
+                    color = "#0680FA" if not bool(waterlogged) else "#929292"
+                    self.canvas.create_oval(pos_x + 0.1 * self.blockSide, pos_y + 0.1 * self.blockSide,
+                                            pos_x + 0.25 * self.blockSide, pos_y + 0.25 * self.blockSide, fill=color)
+                if facing:
+                    self.canvas.create_rectangle(pos_x + int(self.blockSide*0.7), pos_y + int(self.blockSide*0.4), pos_x + self.blockSide, pos_y, fill="black")
+                    self.canvas.create_text(pos_x + self.blockSide, pos_y, fill="#00FF00", text=facing, font=(DefaultFont, int(DefaultFontSize * 0.6), "bold"), anchor="ne")
+                if a:
+                    self.canvas.create_rectangle(pos_x + int(self.blockSide * 0.7), pos_y + int(self.blockSide * 0.6), pos_x + self.blockSide, pos_y + self.blockSide, fill="black")
+                    self.canvas.create_text(pos_x + self.blockSide, pos_y + self.blockSide, fill="#FFFF00", text=a,font=(DefaultFont, int(DefaultFontSize * 0.6), "bold"), anchor="se")
             litem.update_idletasks()
 
     def change_y(self,direction):
@@ -432,16 +459,17 @@ def litVerFix(version: int) -> None:
 
 def CS_trans_dict(inp:str) -> dict:
     d1 = inp.strip("\n").split(",")
-
-    d2 = {}
-    print(d1, d2)
+    d2 : dict[str:[str,dict,dict]] = {}
     for i,s in enumerate(d1):
         init, final =tuple(s.split("-"))
-        print(init,final)
-        init = "minecraft:"+str(cn_translate(init,False))
-        final = "minecraft:"+str(cn_translate(final,False))
-        d2[init] = final
-
+        iprop, fprop = {}, {}
+        initname = init.split("{")[0]
+        if not len(init)==len(initname):
+            iprop = eval(init[len(initname):])
+        finalname = final.split("{")[0]
+        if not len(final)==len(finalname):
+            fprop = eval(final[len(finalname):])
+        d2["minecraft:"+str(cn_translate(initname,False))]=("minecraft:"+str(cn_translate(finalname,False)),iprop,fprop)
     return d2
 
 def import_file():
@@ -751,7 +779,10 @@ if __name__ == "__main__":
     litem = tk.Tk()
     litem.title(f"Litematica Viewer投影查看器 v{APP_VERSION}")
     litem.iconbitmap(grs("icon.ico"))
-    litem.geometry("1280x768")
+    if sys.platform.startswith("win"):
+        litem.state("zoomed")  # Windows 专用
+    else:
+        litem.attributes("-zoomed", True)  # Linux/macOS
     litem.configure(bg=color_map["BG"])
 
     if data["Save"]["First_open"] == "0":
@@ -794,7 +825,7 @@ if __name__ == "__main__":
                                                             (entry_x.get(),entry_y.get(),entry_z.get()),
                                                             (entry_length.get(),entry_width.get(),entry_height.get()), False, 0, [False,False,False,False,False,False]
                                                             ), font=(DefaultFont, DefaultFontSize))
-    menu_analysis.add_command(label="替换特定方块", command=lambda : change_Schematic(schematic, text_change.get("1.0", tk.END), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"), font=(DefaultFont, DefaultFontSize))
+    menu_analysis.add_command(label="替换特定方块", command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"), font=(DefaultFont, DefaultFontSize))
     menu.add_cascade(label="数据分析", menu=menu_analysis, font=(DefaultFont, int(DefaultFontSize*2.0)))
     menu_AnaSet = tk.Menu(menu, tearoff=0)
     menu.add_cascade(label="设置",menu=menu_AnaSet, font=(DefaultFont, int(DefaultFontSize*2.0)))
@@ -851,8 +882,8 @@ if __name__ == "__main__":
     btn_conanaly = CTkButton(frame_top, text="ContainerAnalysis容器分析器", command=lambda: ConAly(),font=(DefaultFont, int(DefaultFontSize * 1.5)))
     btn_conanaly.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
     btn_conanaly.pack(side=tk.LEFT, padx=5)
-    btn_hint = CTkButton(frame_top, text="!HINT注意事项!",
-                             command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用'''),
+    btn_hint = CTkButton(frame_top, text="HINT提示&教程",
+                             command=lambda: msgbox('''----HINT----\n1. 导入文件后需手动点击「简介分析」\n2. 首次点击「简介分析」自动打开导入界面\n3. 非必要关闭 设置-渲染是否渲染 设置. 低配置请关闭渲染 设置-是否3d渲染\n4. 方块ID和替换表可输入中文名或游戏ID (泥土 & minecraft:dirt)\n5. 替换表格式为 原方块-替换方块,原方块2-替换方块2,...\n\t「-」分割新旧方块, 「,」分割不同的组 方块可以中文名和ID混搭使用\n\t旧方块后面添加方块指定编辑的方块属性,新方块后面添加方块指定输出的方块属性\n\t所有方块属性须用中括号「{}」包起来,里面采用键值对格式{"属性":"值",...} !所有内容必须用引号框起来!\n例: 熔炉{"facing":"west"}-高炉{"facing":"east"},橡木台阶-橡木台阶{"waterlogged":"false"}\n西朝向熔炉->东朝向高炉,所有橡木台阶->非含水方橡木台阶'''),
                              font=(DefaultFont, DefaultFontSize*1.5))
     btn_hint.configure(fg_color=color_map["PC"], text_color=color_map["BG"], corner_radius=DefaultCorner)
     btn_hint.pack(side=tk.LEFT, padx=5)
@@ -935,7 +966,7 @@ if __name__ == "__main__":
     btn_spawn2 = CTkButton(frame_func_change, text="生成", font=(DefaultFont, DefaultFontSize*1.6, "bold"), command=lambda : change_Schematic(schematic, CS_trans_dict(text_change.get("1.0", tk.END)), ((entry_min_x.get(),entry_max_x.get()),(entry_min_y.get(),entry_max_y.get()),(entry_min_z.get(),entry_max_z.get())), file_name.split(".")[0]+"_Modified"))
     btn_spawn2.configure(fg_color=color_map["BG"],text_color=color_map["TT"],corner_radius=DefaultCorner)
     btn_spawn2.grid(row=5, column=0, padx=2, pady=2, columnspan=4)
-    tk.Label(frame_func_change, text="替换表= 旧方块[选定方块参数]:新方块[替换方块参数],...", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400").grid(row=6, column=0, padx=5, pady=5, columnspan=4)
+    tk.Label(frame_func_change, text="替换表=旧方块{选定方块参数}:新方块{替换方块参数},...", font=(DefaultFont, DefaultFontSize, "bold"), bg=color_map["MC"], fg="#f70400", justify="left", wraplength=200).grid(row=6, column=0, padx=5, pady=5, columnspan=4)
     # -- 分析设置
     frame_Output = CTkScrollableFrame(frame_func, fg_color=color_map["BG"], corner_radius=DefaultCorner)
     frame_Output.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=20, pady=20)
@@ -997,7 +1028,7 @@ if __name__ == "__main__":
     count_table.heading('num', text='数', anchor="e")
     count_table.heading('unit', text='量', anchor="w")
     count_table.heading('ID', text='ID', anchor="center")
-    count_table.column("#0", width=10)
+    count_table.column("#0", width=40)
     count_table.column("blockID", width=150)
     count_table.column("num", width=40)
     count_table.column("unit", width=80, anchor="e")
@@ -1051,7 +1082,7 @@ if __name__ == "__main__":
     a_auth.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
     a_ver = tk.Label(stat_ver, text="", font=(DefaultFont, int(DefaultFontSize * 1.6)), bg=color_map["PC"],fg=color_map["MC"])
     a_ver.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
-    a_desc = tk.Label(stat_desc, font=(DefaultFont, int(DefaultFontSize * 1.6)), bg=color_map["PC"],fg=color_map["MC"], justify="left", wraplength=200)
+    a_desc = tk.Label(stat_desc, font=(DefaultFont, int(DefaultFontSize * 1.6)), bg=color_map["PC"],fg=color_map["MC"])
     a_desc.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
     try:

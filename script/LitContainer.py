@@ -72,9 +72,7 @@ class LitCon:
             try:
                 id = str(nt['id'])
             except KeyError:
-                print(f"ERROR: 发现缺失'id'的TileEntity，位置:({x},{y},{z})")
-                messagebox.showerror("解析错误", f"发现缺失'id'的TileEntity，位置:({x},{y},{z})")
-                return
+                continue
             if 'item' in nt:
                 item = nt['item']
                 self.cmd_table.insert(f"{l}.0" ,f"{self.cn_id(id)} Pos:{(x,y,z)}\n")
