@@ -795,8 +795,8 @@ if __name__ == "__main__":
     if data["Save"]["First_open"] == "0":
         msgbox('''LitematicaViewer投影查看器V0.7.6更新报告Log
         1. 更新 投影替换方块增加属性编辑功能
-        1. 更新 平面投影步骤查看器UI界面 (可查看每一层的方块渲染,包含纹理和属性)
-        2. 添加 投影分析正确性检测 (主界面右下角的DEBUG) [0.7.5]''')
+        2. 更新 平面投影步骤查看器UI界面 (可查看每一层的方块渲染,包含纹理和属性)
+        3. 添加 投影分析正确性检测 (主界面右下角的DEBUG) [0.7.5]''')
         data["Save"]["First_open"] = "1"
         with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
             json.dump(data, js, indent=2)
