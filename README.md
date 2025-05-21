@@ -1,6 +1,6 @@
 **简体中文** | [English](./README_EN.md)
 
-# LitematicaViewer投影查看器 v0.7+
+# LitematicaViewer投影查看器 v0.7.6+
 
 ### Minecraft tool - 让我的世界投影查看更加的轻量便捷
 
@@ -10,7 +10,7 @@
 [![YoutubeIntro](https://img.shields.io/badge/-Youtube-00A1D6?logo=youtube&logoColor=red)](https://www.youtube.com/watch?v=0nofWrfKJeg)
 
 GITHUB链接: https://github.com/albertchen857/LitematicaViewer
-稳定版EXE文件右侧Resource下载(0.7.2)
+稳定版EXE文件右侧Resource下载
 最新(预览)版本PYTHON文件自行克隆 (如果发现问题请多多写写ISSUE谢谢)
 求求点点星吧 I want Stars~ target 100 stars
 

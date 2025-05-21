@@ -48,7 +48,7 @@ YourClass = getattr(your_module, 'Region')
 plt.rcParams['font.sans-serif'] = [DefaultFont]  # 指定默认字体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
 
-APP_VERSION = '0.7.5'
+APP_VERSION = '0.7.6'
 schematic : Schematic = None
 file_path = ""
 file_name = "litematica"
@@ -235,18 +235,25 @@ class LitStepChecker:
         powered = ""
         half = ""
         wl = ""
+        a = ""
         if "facing" in bp:
-            face = f"朝向:{bp["facing"]} "
+            a = bp["facing"]
+            face = f"朝向:{a} "
         elif "axis" in bp:
-            face = f"朝向:{bp["axis"]}轴 "
+            a = bp["axis"]
+            face = f"朝向:{a}轴 "
         if "half" in bp:
-            half = f"上下:{bp["half"]} "
+            a = bp["half"]
+            half = f"上下:{a} "
         elif "type" in bp:
-            half = f"上下:{bp["type"]} "
+            a = bp["type"]
+            half = f"上下:{a} "
         if "powered" in bp:
-            powered = f"充能:{bp["powered"]} "
+            a = bp["powered"]
+            powered = f"充能:{a} "
         if "waterlogged" in bp:
-            wl = f"含水:{bp["waterlogged"]} "
+            a = bp["waterlogged"]
+            wl = f"含水:{a} "
 
         pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + int(i) * self.blockSide
         pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + int(j) * self.blockSide
@@ -786,10 +793,10 @@ if __name__ == "__main__":
     litem.configure(bg=color_map["BG"])
 
     if data["Save"]["First_open"] == "0":
-        msgbox('''LitematicaViewer投影查看器V0.7.5更新报告Log
-        1. 更新 平面投影步骤查看器 (可查看每一层的方块渲染,包含纹理和属性)
-        2. 主界面添加 常用功能按钮
-        3. 添加 投影分析正确性检测 (主界面右下角的DEBUG)''')
+        msgbox('''LitematicaViewer投影查看器V0.7.6更新报告Log
+        1. 更新 投影替换方块增加属性编辑功能
+        1. 更新 平面投影步骤查看器UI界面 (可查看每一层的方块渲染,包含纹理和属性)
+        2. 添加 投影分析正确性检测 (主界面右下角的DEBUG) [0.7.5]''')
         data["Save"]["First_open"] = "1"
         with open(grs(os.path.join('lang', 'data.json')), 'w') as js:
             json.dump(data, js, indent=2)
