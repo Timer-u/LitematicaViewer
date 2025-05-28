@@ -158,6 +158,8 @@ class LitStepChecker:
         self.xl = max([x for (x, _, _), _, _ in Block_pos]) + 1
         self.yl = max([y for (_, y, _), _, _ in Block_pos]) + 1
         self.zl = max([z for (_, _, z), _, _ in Block_pos]) + 1
+        self.largesize = self.xl>99 or self.zl>99
+        print(self.largesize)
         #print((self.xl, self.yl, self.zl))
         self.pos_blocks = [[[(None,None)] * (self.zl) for _ in range(self.yl)] for _ in range(self.xl)]
         for position, block_id, block_prop in Block_pos:
@@ -166,7 +168,6 @@ class LitStepChecker:
         #print(self.pos_blocks)
 
         self.cy = 0
-        self.md = 2
         self.blockSide = 20
         self.side = 100
         self.images = []
@@ -174,7 +175,11 @@ class LitStepChecker:
         self.select_block = ""
         self.select_old = (0,0)
         self.rendblock = 0
-        #self.propMap = {"face":["attached","axis", "face", "facing", "hanging", "orientation", "part", "rotation", "shape"],"state":["bites", "candles", "charges", "delay", "eggs", "flower_amount", "note", "inverted", "layers", "level", "mode", "open", "pickles", "signal_fire", "type", "vertical_direction", "half"],"other":["waterlogged", "powered"]}
+        self.time1 = 0
+
+        self.ck = tk.IntVar(value=0) if self.largesize else tk.IntVar(value=1)
+        self.gr = tk.IntVar(value=0) if self.largesize else tk.IntVar(value=1)
+        self.prr = tk.IntVar(value=0) if self.largesize else tk.IntVar(value=1)
 
         self.LS = tk.Toplevel(litem)
         self.LS.title("Litematica Step Checker")
@@ -194,9 +199,6 @@ class LitStepChecker:
         self.button_down.grid(row=0, column=2, padx=2, pady=5)
         self.button_sdown = tk.Button(self.frame, text="⇊", command=lambda: self.change_y("sdown"))
         self.button_sdown.grid(row=0, column=3, padx=2, pady=5)
-        self.ck = tk.IntVar(value=1)
-        self.gr = tk.IntVar(value=1)
-        self.prr = tk.IntVar(value=1)
         self.checkbutton = tk.Checkbutton(self.frame, text="底层", variable=self.ck)
         self.checkbutton.grid(row=0, column=4, padx=2, pady=5)
         self.cgrid = tk.Checkbutton(self.frame, text="网格", variable=self.gr)
@@ -271,7 +273,7 @@ class LitStepChecker:
         self.canvas.create_image(20, 20, anchor=tk.NW, image=self.photo)
 
     def update_canvas(self):
-        time1 = time.time()
+        self.time1 = time.time()
         Scwidth = min(self.LS.winfo_width(), self.LS.winfo_height())
         Stuwidth = max(self.xl, self.zl)
         self.images = []
@@ -284,7 +286,7 @@ class LitStepChecker:
         self.draw_current_layer()
         if self.prr.get():
             self.draw_prop_layer()
-        self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time()-time1:.2f}s")
+        self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time()-self.time1:.2f}s")
 
     def draw_line(self):
         self.canvas.create_line(self.side, self.side, self.LS.winfo_width() - self.side, self.side, fill=color_map["PC"],
@@ -295,28 +297,29 @@ class LitStepChecker:
                                 font=(DefaultFont, int(DefaultFontSize * 1.5)))
         self.canvas.create_text(self.side-5, self.side, fill=color_map["PC"], text="Z", anchor=tk.E,
                                 font=(DefaultFont, int(DefaultFontSize * 1.5)))
-        easynum = self.xl > 50 or self.zl > 50
+        easynum = 0
+        if self.xl > 500 and self.zl > 500:
+            easynum = 3
+        elif self.largesize:
+            easynum = 2
+        elif self.xl > 50 and self.zl > 50:
+            easynum = 1
+        print(easynum)
         grid = bool(self.gr.get())
         for i in range(self.xl+1):
             pos_x = self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2 + i * self.blockSide
-            if easynum and i % 5 == 0:
-                self.canvas.create_line(pos_x, int(self.side*0.7), pos_x, self.LS.winfo_width() if grid else self.side, fill=color_map["PC"], width=1)
-                self.canvas.create_text(pos_x, int(self.side*0.7)-10, fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, max(10,int(self.blockSide * 0.3))))
-            elif easynum:
-                self.canvas.create_line(pos_x, int(self.side * 0.75), pos_x, self.LS.winfo_width() if grid else self.side,fill=color_map["PC"], width=1)
-            else:
-                self.canvas.create_text(pos_x, int(self.side * 0.75)-10, fill=color_map["PC"], text=i,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.3))))
-                self.canvas.create_line(pos_x, int(self.side * 0.75), pos_x,self.LS.winfo_width() if grid else self.side, fill=color_map["PC"], width=1)
+            if (easynum == 3 and i % 100 == 0) or (easynum == 2 and i % 20 == 0) or (easynum == 1 and i % 5 == 0) or not easynum:
+                self.canvas.create_line(pos_x, int(self.side*0.6), pos_x, self.LS.winfo_width() if grid else self.side, fill=color_map["PC"], width=1)
+                self.canvas.create_text(pos_x, int(self.side*0.6)-10, fill=color_map["PC"], text=i, anchor=tk.CENTER, font=(DefaultFont, max(10,int(self.blockSide * 0.3))))
+            elif easynum == 1 or (easynum == 2 and i % 5 == 0) or (easynum == 3 and i % 16 == 0):
+                self.canvas.create_line(pos_x, int(self.side * 0.7), pos_x, self.LS.winfo_width() if grid else self.side,fill=color_map["PC"], width=1)
         for j in range(self.zl+1):
             pos_y = self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2 + j * self.blockSide
-            if easynum and j % 5 == 0:
+            if (easynum == 3 and j % 100 == 0) or (easynum == 2 and j % 20 == 0) or (easynum == 1 and j % 5 == 0) or not easynum:
                 self.canvas.create_line(int(self.side*0.7), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
                 self.canvas.create_text(int(self.side*0.75)-10, pos_y, fill=color_map["PC"], text=j, anchor=tk.CENTER,font=(DefaultFont, max(10,int(self.blockSide * 0.3))))
-            elif easynum:
+            elif easynum == 1 or (easynum == 2 and j % 5 == 0) or (easynum == 3 and j % 16 == 0):
                 self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
-            else:
-                self.canvas.create_line(int(self.side*0.75), pos_y, self.LS.winfo_width() if grid else self.side, pos_y, fill=color_map["PC"], width=1)
-                self.canvas.create_text(int(self.side * 0.75) - 10, pos_y, fill=color_map["PC"], text=j,anchor=tk.CENTER, font=(DefaultFont, max(10, int(self.blockSide * 0.3))))
     def draw_previous_layer(self):
         self.combined_image = Image.new('RGBA', (self.blockSide * self.xl, self.blockSide * self.zl), (0, 0, 0, 0))
         for i in range(self.xl):
@@ -340,6 +343,7 @@ class LitStepChecker:
                     image = ImageEnhance.Brightness(image).enhance(0.7)
                     image.putalpha(Image.new('L', image.size, 64))
                     self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
+            self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time() - self.time1:.2f}s")
         photo = ImageTk.PhotoImage(self.combined_image)
         self.images.append(photo)
         self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
@@ -365,6 +369,7 @@ class LitStepChecker:
                     image = Image.open(grs(os.path.join('block', 'info_update.png')))
                     image = image.convert('RGB').resize((self.blockSide, self.blockSide), Image.NEAREST)
                     self.combined_image.paste(image, (self.blockSide*i, self.blockSide*j))
+            self.label_rend.config(text=f"累计渲染={self.rendblock}|累计耗时={time.time() - self.time1:.2f}s")
         photo = ImageTk.PhotoImage(self.combined_image)
         self.images.append(photo)
         self.canvas.create_image(self.side + (self.LS.winfo_width() - 2 * self.side - self.xl * self.blockSide) // 2, self.side + (self.LS.winfo_height() - 2 * self.side - self.zl * self.blockSide) // 2, anchor=tk.NW, image=photo)
@@ -534,8 +539,8 @@ def output_data(classification : bool = False):
     if not output_file_path:
         return
     with codecs.open(output_file_path, 'w', encoding='utf-8-sig') as f:
-        Block = dict(sorted(Block.items(), key=lambda x: x[1], reverse=True))  # Block = list
         if not classification:
+            Block = dict(sorted(Block.items(), key=lambda x: x[1], reverse=True))  # Block = list
             for val in Block:
                 num = Block[val]
                 id = val.split("[")[0].split(":")[-1]
@@ -545,10 +550,13 @@ def output_data(classification : bool = False):
                 else:
                     f.write(f"{num}[{convert_units(num)}] | {cn_translate(id)} [{id}]\n")
         else:
-            for catigory in Cla_Block:
-                if Cla_Block[catigory]:
-                    f.write(f"\n{catigory}\n" + "-" * 20 + "\n")
-                for val in Cla_Block[catigory]:
+            for v in Cla_Block:
+                Cla_Block[v].sort(key=lambda x: x[0], reverse=True)
+            print(Cla_Block)
+            for category in Cla_Block:
+                if Cla_Block[category]:
+                    f.write(f"\n{category}\n" + "-" * 20 + "\n")
+                for val in Cla_Block[category]:
                     num = val[0]
                     id = str(val[1]).split("[")[0].split(":")[-1]
                     extension = os.path.splitext(output_file_path)[1].lower()
@@ -715,7 +723,7 @@ def start_analysis():
             Cla_Block[typeB].append((Block[val], val))
         else:
             Cla_Block["其他"].append((Block[val], val))
-    #print(f"{Cla_Block}")
+    print(f"{Cla_Block}")
     #print(Block_pos)
     label_bottom.config(
         text=f"Size体积: {size_x}x{size_y}x{size_z} | Number数量: {num} | Times倍数: {time} | Types种类: {len(Block)}")
