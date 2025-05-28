@@ -552,7 +552,6 @@ def output_data(classification : bool = False):
         else:
             for v in Cla_Block:
                 Cla_Block[v].sort(key=lambda x: x[0], reverse=True)
-            print(Cla_Block)
             for category in Cla_Block:
                 if Cla_Block[category]:
                     f.write(f"\n{category}\n" + "-" * 20 + "\n")
