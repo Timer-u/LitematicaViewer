@@ -142,6 +142,21 @@ def Update(mode:["Github","Onedrive"]):
     else:
         msgbox("已是最新版本~",title="Download")
 
+def Redenmc(search : str, mode):
+    match mode:
+        case "搜索模式":
+            webbrowser.open(
+                "https://redenmc.com/litematica?q="+search)
+        case "UID搜索":
+            webbrowser.open(
+                "https://redenmc.com/litematica/"+search)
+        case "UID下载|多文件项目后面加/和编号":
+            index = search.split("/")[-1]
+            search = search.split("/")[0]
+            if index == search: index = '1'
+            webbrowser.open(
+                f"https://redenmc.com/api/mc-services/yisibite/{search}/download/{index}")
+
 def ConAly():
     try:
         from script.LitContainer import LitCon
@@ -424,7 +439,7 @@ class LitStepChecker:
                         a = ">"
 
 
-                if waterlogged is not "":
+                if waterlogged != "":
                     color = "#0680FA" if not bool(waterlogged) else "#929292"
                     self.canvas.create_oval(pos_x + 0.1 * self.blockSide, pos_y + 0.1 * self.blockSide,
                                             pos_x + 0.25 * self.blockSide, pos_y + 0.25 * self.blockSide, fill=color)
@@ -486,7 +501,7 @@ def CS_trans_dict(inp:str) -> dict:
 
 def import_file():
     global file_path, file_name
-    file_path = filedialog.askopenfilename(filetypes=[("Litematic File","*.litematic"),("All File","*.")])
+    file_path = filedialog.askopenfilename(filetypes=[("Litematic File","*.litematic"),("All File","*.*")])
     if not file_path:
         return
     file_path = os.path.normpath(file_path)
@@ -877,6 +892,7 @@ if __name__ == "__main__":
     menu_Help.add_command(label="下载最新版本Github",command=lambda: Update('Github'),font=(DefaultFont, DefaultFontSize))
     menu_Help.add_command(label="下载最新版本Onedrive", command=lambda: Update('Onedrive'),font=(DefaultFont, DefaultFontSize))
     menu_Help.add_command(label="手动更新软件库", command=manual_install_pk, font=(DefaultFont, DefaultFontSize))
+    menu_Help.add_command(label="Redenmc投影社区",command=lambda: webbrowser.open("https://redenmc.com/litematica"),font=(DefaultFont, DefaultFontSize))
     litem.config(menu=menu, padx=10)
 
     #  顶容器
@@ -1098,6 +1114,17 @@ if __name__ == "__main__":
     a_ver.pack(fill=tk.X, side=tk.RIGHT, padx=5, pady=5)
     a_desc = tk.Label(stat_desc, font=(DefaultFont, int(DefaultFontSize * 1.6)), bg=color_map["PC"],fg=color_map["MC"])
     a_desc.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
+
+    redenmcframe = CTkFrame(frame_left, fg_color=color_map["MC"], corner_radius=DefaultCorner)
+    redenmcframe.pack(side=tk.TOP, fill=tk.BOTH, expand=False, padx=10, pady=0)
+    redenLab = CTkLabel(redenmcframe, text="REDENMC投影搜索", font=(DefaultFont, int(DefaultFontSize * 1.6)), fg_color=color_map["MC"], text_color=color_map["BG"])
+    redenLab.grid(padx=5, pady=5, row=0,column=0,columnspan=2)
+    redenenter = CTkEntry(redenmcframe, font=(DefaultFont, int(DefaultFontSize*1.6)), fg_color=color_map["BG"], text_color=color_map["MC"], width=200)
+    redenenter.grid(padx=5, pady=5, row=1,column=0,columnspan=2)
+    redenselect = CTkComboBox(redenmcframe, values=["搜索模式","UID搜索","UID下载|多文件项目后面加/和编号"], font=(DefaultFont, int(DefaultFontSize*1.6)), fg_color=color_map["MC"], text_color=color_map["BG"])
+    redenselect.grid(padx=5, pady=5, row=2,column=0)
+    redenbtn = CTkButton(redenmcframe, text="搜索", font=(DefaultFont, int(DefaultFontSize*1.6)), fg_color=color_map["BG"], text_color=color_map["MC"], command= lambda: Redenmc(redenenter.get(), redenselect.get()))
+    redenbtn.grid(padx=5, pady=5, row=2,column=1)
 
     try:
         with open(grs('log.txt'), 'r', encoding='utf-8') as file:

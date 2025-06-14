@@ -38,7 +38,7 @@
   },
   "Save": {
     "Basic": "11111111",
-    "First_open": "0",
+    "First_open": "1",
     "ui": {
       "Font": "Arial",
       "FontSize": 10,
